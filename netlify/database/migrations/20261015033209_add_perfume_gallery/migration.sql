@@ -1,0 +1,1 @@
+ALTER TABLE "products" ADD COLUMN "additional_images" jsonb DEFAULT '[]' NOT NULL;

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="kicker">Perfumería de autor</p>
+    <h1>Cada aroma<br>es una página<br>de tu historia.</h1>
+    <p class="lead">Fragancias profundas, de noche y de misterio, para quienes escriben su propia firma. Elige la tuya y pídela por WhatsApp.</p>
+    <div class="hero-actions"><a href="#catalogo" class="button button-gold">Ver la colección</a><a href="#contacto" class="button button-ghost">Contacto</a></div>
+  </div>
+  <div class="hero-visual" aria-hidden="true">
+    <div class="arch"><div class="glow"></div>{% include '_mark.html' %}<span class="arch-note">Notas de salida, corazón y fondo</span></div>
+  </div>
+</section>
+<section class="catalog-section" id="catalogo">
+  <div class="section-heading">
+    <div><h2>La colección</h2><p>Una selección para expresar quién eres sin decir una palabra.</p></div>
+    <form class="search-form" action="{{ url_for('index') }}#catalogo" method="get">
+      <input type="hidden" name="category" value="{{ category }}"><input name="q" value="{{ q }}" placeholder="Buscar perfume o marca" aria-label="Buscar perfume"><button type="submit" aria-label="Buscar">⌕</button>
+    </form>
+  </div>
+  <div class="filter-row">
+    <a class="filter-chip {% if not category %}selected{% endif %}" href="{{ url_for('index') }}#catalogo">Todos</a>
+    {% for c in ['Hombre','Mujer','Unisex'] %}<a class="filter-chip {% if category == c %}selected{% endif %}" href="{{ url_for('index', {category: c, q: q}) }}#catalogo">{{ c }}</a>{% endfor %}
+    <span class="product-count">{{ products|length }} perfumes</span>
+  </div>
+  <div class="product-grid">
+    {% for p in products %}
+    <article class="product-card" data-product-card="{{ p.id }}">
+      <div class="product-image">
+        {% if p.image %}<img src="{{ url_for('static', {filename: 'uploads/' + p.image}) }}" alt="{{ p.name }}" loading="lazy">
+        {% else %}<div class="placeholder-bottle tone-{{ loop.index0 % 3 }}">{% include '_mark.html' %}</div>{% endif %}
+        {% if p.featured %}<span class="product-tag">Destacado</span>{% endif %}
+        {% if p.stock <= 0 %}<span class="sold-out">Agotado</span>{% endif %}
+        <button class="quick-add" data-add="{{ p.id }}" {% if p.stock <= 0 %}disabled{% endif %}>Añadir a la bolsa</button>
+      </div>
+      <div class="product-info">
+        <div class="product-meta"><span>{{ p.brand or 'Journals Collection' }}</span><span>{{ p.size }}</span></div>
+        <h3><button type="button" class="product-detail-trigger" data-detail="{{ p.id }}" aria-haspopup="dialog">{{ p.name }}</button></h3>
+        {% if p.description %}<p class="desc">{{ p.description }}</p>{% endif %}
+        <div class="price-row"><strong>{{ p.price|money }} COP</strong>{% if p.old_price %}<del>{{ p.old_price|money }}</del>{% endif %}</div>
+        <div class="product-bottom"><span>{{ p.category }}{% if p.fragrance %}, {{ p.fragrance|lower }}{% endif %}</span><span class="stock-dot {% if p.stock <= 0 %}out{% endif %}">{% if p.stock > 0 %}Disponible{% else %}Agotado{% endif %}</span></div>
+      </div>
+      <button type="button" class="product-detail-link" data-detail="{{ p.id }}" aria-haspopup="dialog">Ver perfume completo <span aria-hidden="true">↗</span></button>
+    </article>
+    <template id="product-detail-{{ p.id }}">
+      <div class="perfume-detail-layout">
+        <div class="perfume-detail-image">
+          {% if p.image %}<button type="button" class="perfume-photo-frame" data-photo-zoom aria-label="Ampliar imagen de {{ p.name }}" aria-haspopup="dialog"><img data-gallery-main src="{{ url_for('static', {filename: 'uploads/' + p.image}) }}" alt="{{ p.name }} · Foto 1"></button><p class="small-note">Pulsa la imagen para ampliarla.</p>
+          {% if p.additional_images|length %}
+          <div class="perfume-thumbnails" role="group" aria-label="Fotos de {{ p.name }}">
+            <button type="button" class="perfume-thumbnail" data-gallery-photo aria-label="Ver foto 1" aria-pressed="true"><img src="{{ url_for('static', {filename: 'uploads/' + p.image}) }}" alt="{{ p.name }} · Foto 1"></button>
+            {% for photo in p.additional_images %}<button type="button" class="perfume-thumbnail" data-gallery-photo aria-label="Ver foto {{ loop.index + 1 }}" aria-pressed="false"><img src="{{ url_for('static', {filename: 'uploads/' + photo}) }}" alt="{{ p.name }} · Foto {{ loop.index + 1 }}" loading="lazy"></button>{% endfor %}
+          </div><p class="small-note">Selecciona una miniatura para ver la foto.</p>
+          {% endif %}
+          {% else %}<div class="placeholder-bottle tone-{{ loop.index0 % 3 }}">{% include '_mark.html' %}</div><span class="small-note">Imagen no disponible</span>{% endif %}
+        </div>
+        <div class="perfume-detail-copy">
+          <p class="kicker">{{ p.brand or 'Journals Collection' }}</p>
+          <h2 id="perfumeDetailTitle">{{ p.name }}</h2>
+          {% if p.featured %}<span class="detail-featured">Selección destacada</span>{% endif %}
+          <div class="price-row"><strong>{{ p.price|money }} COP</strong>{% if p.old_price %}<del>{{ p.old_price|money }} COP</del>{% endif %}</div>
+          <p class="detail-description">{{ p.description or 'Consulta con la tienda para conocer más detalles de esta fragancia.' }}</p>
+          <dl class="perfume-specs">
+            <div><dt>Categoría</dt><dd>{{ p.category }}</dd></div>
+            {% if p.size %}<div><dt>Presentación</dt><dd>{{ p.size }}</dd></div>{% endif %}
+            {% if p.fragrance %}<div><dt>Familia olfativa</dt><dd>{{ p.fragrance }}</dd></div>{% endif %}
+            <div><dt>Disponibilidad</dt><dd>{% if p.stock > 0 %}{{ p.stock }} unidades disponibles{% else %}Agotado{% endif %}</dd></div>
+          </dl>
+          <button type="button" class="button button-gold full" data-detail-add="{{ p.id }}" {% if p.stock <= 0 %}disabled{% endif %}>{% if p.stock > 0 %}Añadir a la bolsa{% else %}Agotado{% endif %}</button>
+          <a class="button button-ghost full" href="{{ wa_url('Hola, quiero información sobre ' + p.name + ' (' + p.size + ').') or '#contacto' }}" {% if wa_base %}target="_blank" rel="noopener"{% endif %}>Consultar por WhatsApp</a>
+          <p class="small-note">El pedido y la disponibilidad se confirman directamente con la tienda.</p>
+        </div>
+      </div>
+    </template>
+    {% else %}
+    <div class="empty-state"><h3>No encontramos perfumes</h3><p>Prueba con otra búsqueda o categoría.</p><a class="button button-ghost" href="{{ url_for('index') }}">Ver toda la colección</a></div>
+    {% endfor %}
+  </div>
+</section>
+<dialog id="perfumeDetail" class="perfume-detail" aria-labelledby="perfumeDetailTitle">
+  <button type="button" class="icon-button perfume-detail-close" aria-label="Cerrar información del perfume" autofocus>×</button>
+  <div id="perfumeDetailContent"></div>
+</dialog>
+<dialog id="perfumePhotoZoom" class="perfume-photo-zoom" aria-label="Imagen ampliada del perfume">
+  <button type="button" class="icon-button perfume-detail-close" aria-label="Cerrar imagen ampliada" autofocus>×</button>
+  <img data-zoom-image alt="">
+</dialog>
+<section class="whatsapp-banner">
+  <div><h2>¿No sabes cuál elegir?</h2><p>Cuéntanos para qué ocasión lo quieres y te recomendamos un aroma.</p></div>
+  <a class="button button-whatsapp" href="{{ wa_url('Hola, necesito asesoría para elegir un perfume.') or '#contacto' }}" {% if wa_base %}target="_blank" rel="noopener"{% endif %}>Hablar por WhatsApp</a>
+</section>
+<section class="contact-section" id="contacto">
+  <div class="section-heading"><div><h2>Contacto</h2><p>Escríbenos, te respondemos con gusto.</p></div></div>
+  <div class="contact-grid">
+    {% macro tile(label, value, href='') %}<div class="contact-tile {% if not value %}empty{% endif %}"><span>{{ label }}</span>{% if value and href %}<a href="{{ href }}" {% if href.slice(0,4) == 'http' %}target="_blank" rel="noopener"{% endif %}>{{ value }}</a>{% elif value %}<b>{{ value }}</b>{% else %}<b>Disponible pronto</b>{% endif %}</div>{% endmacro %}
+    {{ tile('WhatsApp', store.whatsapp and ('+' + store.whatsapp) or ('Escríbenos' if wa_base else ''), wa_url('Hola, quisiera más información.')) }}
+    {{ tile('Teléfono', store.phone, 'tel:' + store.phone.replace(' ', '')) }}
+    {{ tile('Correo', store.email, 'mailto:' + store.email) }}
+    {{ tile('Instagram', store.instagram, socials.instagram) }}
+    {{ tile('Facebook', store.facebook, socials.facebook) }}
+    {{ tile('TikTok', store.tiktok, socials.tiktok) }}
+    {{ tile('Ubicación', store.address) }}
+    {{ tile('Horario', store.hours) }}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b090c">
+  <title>{% block title %}{{ store.store_name }} · {{ store.tagline }}{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', {filename: 'favicon.svg'}) }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', {filename: 'style.css'}) }}">
+</head>
+<body>
+{% macro brand(cls='') %}<a class="brand {{ cls }}" href="{{ url_for('index') }}" aria-label="{{ store.store_name }}">{% include '_mark.html' %}<span class="wordmark"><b>Journals</b><i>perfumes</i></span></a>{% endmacro %}
+<header class="site-header">
+  {{ brand() }}
+  <nav class="nav">
+    <a href="{{ url_for('index') }}">Inicio</a>
+    <a href="{{ url_for('index', {category: 'Hombre'}) }}#catalogo">Hombre</a>
+    <a href="{{ url_for('index', {category: 'Mujer'}) }}#catalogo">Mujer</a>
+    <a href="{{ url_for('index', {category: 'Unisex'}) }}#catalogo">Unisex</a>
+    <a href="{{ url_for('index') }}#contacto">Contacto</a>
+  </nav>
+  <div class="header-actions">
+    <button class="cart-open" id="openCart" type="button">Bolsa <span id="cartCount">0</span></button>
+    <a class="admin-link" href="{{ url_for('admin') }}">Administrar</a>
+  </div>
+</header>
+{% if messages %}<div class="flash-wrap">{% for message in messages %}<div class="flash" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}
+<main>{% block content %}{% endblock %}</main>
+<footer class="footer">
+  <div>{{ brand('footer-brand') }}<p>{{ store.tagline }}</p></div>
+  <div class="footer-links">
+    {% if socials.instagram %}<a href="{{ socials.instagram }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
+    {% if socials.facebook %}<a href="{{ socials.facebook }}" target="_blank" rel="noopener">Facebook</a>{% endif %}
+    {% if socials.tiktok %}<a href="{{ socials.tiktok }}" target="_blank" rel="noopener">TikTok</a>{% endif %}
+    <a href="{{ url_for('index') }}#contacto">Contacto</a>
+  </div>
+  <span class="copy">© {{ store.store_name }}</span>
+</footer>
+<a class="wa-float" href="{{ wa_url('Hola, quiero información sobre sus perfumes.') or url_for('index') + '#contacto' }}" {% if wa_base %}target="_blank" rel="noopener"{% endif %} aria-label="Escribir por WhatsApp">
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.600 15.100L2 22l5-1.300A10 10 0 1 0 12 2Zm5.200 14.200c-.2.600-1.300 1.200-1.800 1.200-.5.100-1 .2-3.300-.7-2.800-1.100-4.500-4-4.700-4.200-.1-.2-1.100-1.500-1.100-2.800s.7-2 1-2.300c.2-.3.500-.3.700-.3h.5c.2 0 .4 0 .6.500l.8 2c.1.200.1.400 0 .5l-.3.500-.4.400c-.1.200-.3.300-.1.600.2.300.8 1.300 1.700 2.100 1.100 1 2.100 1.300 2.400 1.500.3.100.5.100.6-.1l.9-1.100c.2-.3.400-.2.600-.1l1.900.9c.3.100.5.200.5.300.1.200.1.700-.1 1.300Z"/></svg>
+</a>
+<div class="cart-backdrop" id="cartBackdrop"></div>
+<aside class="cart-panel" id="cartPanel" role="dialog" aria-modal="true" tabindex="-1" aria-label="Bolsa de compras">
+  <div class="cart-head"><div><h2>Tu bolsa</h2><span class="sub">Tu selección</span></div><button id="closeCart" class="icon-button" aria-label="Cerrar bolsa">×</button></div>
+  <div id="cartItems" class="cart-items"></div>
+  <div class="cart-bottom"><div class="cart-total"><span>Total estimado</span><strong id="cartTotal">$0</strong></div>
+    <button class="button button-whatsapp full" id="checkout">Pedir por WhatsApp</button>
+    <p class="small-note">El pedido se confirma directamente con la tienda por WhatsApp.</p>
+  </div>
+</aside>
+<script>
+  if (location.pathname !== '/admin/login' && /(?:invite|recovery)_token=/.test(location.hash)) location.replace('/admin/login' + location.hash);
+  window.STORE_CONFIG = {
+    name: {{ store.store_name|tojson }},
+    waBase: {{ wa_base|tojson }},
+    products: [{% for p in (cartProducts) %}{id: {{ p.id }}, name: {{ p.name|tojson }}, brand: {{ p.brand|tojson }}, price: {{ p.price }}, stock: {{ p.stock }}, size: {{ p.size|tojson }}},{% endfor %}]
+  };
+</script>
+<script src="{{ url_for('static', {filename: 'app.js'}) }}"></script>
+</body>
+</html>

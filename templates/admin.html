@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Administración · {{ store.store_name }}{% endblock %}
+{% block content %}
+<section class="admin-page">
+  <div class="admin-top">
+    <div><h1>Administrar tienda</h1><p>Gestiona tu catálogo, precios e inventario desde un solo lugar.</p></div>
+    <form action="{{ url_for('logout') }}" method="post"><button class="button button-outline" type="submit">Cerrar sesión</button></form>
+  </div>
+  <div class="admin-stats">
+    <div><span>Productos registrados</span><strong>{{ products|length }}</strong></div>
+    <div><span>Productos publicados</span><strong>{{ publishedCount }}</strong></div>
+    <div><span>Unidades disponibles</span><strong>{{ stockCount }}</strong></div>
+  </div>
+  <div class="admin-layout">
+    <section class="admin-card">
+      <div class="admin-card-head"><div><h2>Añadir producto</h2></div><span class="admin-plus">＋</span></div>
+      <form method="post" action="{{ url_for('save_product') }}" enctype="multipart/form-data" class="product-form" id="productForm">
+        <input type="hidden" name="id" id="productId">
+        <label>Nombre del perfume *<input name="name" id="name" required placeholder="Ej. Oud Signature"></label>
+        <div class="form-grid">
+          <label>Marca<input name="brand" id="brand" placeholder="Marca del perfume"></label>
+          <label>Tamaño<input name="size" id="size" placeholder="100 ml"></label>
+        </div>
+        <div class="form-grid">
+          <label>Precio (COP) *<input type="number" name="price" id="price" required min="0" step="100" placeholder="150000"></label>
+          <label>Precio anterior<input type="number" name="old_price" id="old_price" min="0" step="100" placeholder="Opcional"></label>
+        </div>
+        <div class="form-grid">
+          <label>Categoría<select name="category" id="category"><option>Unisex</option><option>Hombre</option><option>Mujer</option></select></label>
+          <label>Familia olfativa<input name="fragrance" id="fragrance" placeholder="Amaderada, floral..."></label>
+        </div>
+        <label>Descripción<textarea name="description" id="description" rows="3" placeholder="Describe la fragancia..."></textarea></label>
+        <label>Fotografía principal<input type="file" name="image" id="image" accept=".jpg,.jpeg,.png,.webp,.gif"><span class="field-help">JPG, PNG, WEBP o GIF · Máximo 4 MB. Si editas sin subir una imagen, se conserva la actual.</span></label>
+        <label>Fotos adicionales<input type="file" name="additional_images" id="additionalImages" accept=".jpg,.jpeg,.png,.webp,.gif" multiple><span class="field-help">Hasta 8 fotos adicionales. Selecciona varias a la vez. Todas las fotos nuevas deben pesar menos de 4 MB en total.</span></label>
+        <div id="existingImages" class="admin-photo-list"></div>
+        <label>Unidades en inventario<input type="number" name="stock" id="stock" min="0" value="1" required></label>
+        <div class="check-row"><label class="check-label"><input type="checkbox" name="featured" id="featured"> Producto destacado</label><label class="check-label"><input type="checkbox" name="active" id="active" checked> Publicado en la tienda</label></div>
+        <div class="form-actions"><button class="button button-gold" type="submit" id="saveButton">Guardar producto</button><button class="button button-outline" type="button" id="resetForm">Limpiar</button></div>
+      </form>
+    </section>
+    <section class="admin-card inventory-card">
+      <div class="admin-card-head"><div><h2>Tus productos</h2></div><span class="inventory-count">{{ products|length }} en total</span></div>
+      <div class="inventory-list">
+        {% for p in products %}
+        <div class="inventory-item">
+          <div class="inventory-thumb">{% if p.image %}<img src="{{ url_for('static', {filename: 'uploads/' + p.image}) }}" alt="">{% else %}<span>✧</span>{% endif %}</div>
+          <div class="inventory-details"><strong>{{ p.name }}</strong><span>{{ p.brand or p.category }} · {{ p.size }}</span><b>{{ p.price|money }} COP</b></div>
+          <div class="inventory-status"><span class="status-pill {% if not p.active %}inactive{% elif p.stock <= 0 %}inactive{% endif %}">{% if not p.active %}Oculto{% elif p.stock <= 0 %}Agotado{% else %}{{ p.stock }} uds.{% endif %}</span><div class="inventory-actions"><button type="button" class="text-action edit-product" data-product='{{ {"id":p.id,"name":p.name,"brand":p.brand,"price":p.price,"old_price":p.old_price,"description":p.description,"size":p.size,"category":p.category,"fragrance":p.fragrance,"stock":p.stock,"featured":p.featured,"active":p.active,"additional_images":p.additional_images}|tojson }}'>Editar</button><form method="post" action="{{ url_for('delete_product', {product_id: p.id}) }}" onsubmit="return confirm('¿Eliminar este producto?')"><button class="text-action danger" type="submit">Eliminar</button></form></div></div>
+        </div>
+        {% else %}<p class="muted">Todavía no hay productos.</p>{% endfor %}
+      </div>
+    </section>
+  </div>
+  <section class="admin-card settings-card">
+    <div class="admin-card-head"><div><h2>Datos de la tienda y contacto</h2></div></div>
+    <form method="post" action="{{ url_for('save_settings') }}" class="settings-form">
+      <label>Nombre de la tienda<input name="store_name" value="{{ store.store_name }}" required></label>
+      <label>Frase de marca<input name="tagline" value="{{ store.tagline }}"></label>
+      <label>Número de WhatsApp<input name="whatsapp" value="{{ store.whatsapp }}" placeholder="573001234567"><span class="field-help">Solo números con código de país. Colombia: 57 + número.</span></label>
+      <label class="wide">Enlace de WhatsApp (opcional, tiene prioridad sobre el número)<input name="whatsapp_link" value="{{ store.whatsapp_link }}" placeholder="https://wa.me/573001234567"><span class="field-help">Pega aquí el link al que redirigen todos los botones de WhatsApp.</span></label>
+      <label>Teléfono<input name="phone" value="{{ store.phone }}" placeholder="+57 300 000 0000"></label>
+      <label>Correo<input name="email" type="email" value="{{ store.email }}" placeholder="hola@journalsperfumes.com"></label>
+      <label>Instagram (@usuario o enlace)<input name="instagram" value="{{ store.instagram }}" placeholder="@journalsperfumes"></label>
+      <label>Facebook (usuario o enlace)<input name="facebook" value="{{ store.facebook }}"></label>
+      <label>TikTok (@usuario o enlace)<input name="tiktok" value="{{ store.tiktok }}"></label>
+      <label>Ubicación<input name="address" value="{{ store.address }}" placeholder="Ciudad, barrio o dirección"></label>
+      <label>Horario<input name="hours" value="{{ store.hours }}" placeholder="Lun a sáb, 9 a. m. a 7 p. m."></label>
+      <button class="button button-gold" type="submit">Guardar cambios</button>
+    </form>
+  </section>
+</section>
+<script>
+document.querySelectorAll('.edit-product').forEach(btn => btn.addEventListener('click', () => {
+  const p = JSON.parse(btn.dataset.product);
+  document.getElementById('productForm').reset();
+  document.getElementById('existingImages').replaceChildren();
+  (p.additional_images || []).forEach(key => {
+    const label = document.createElement('label');
+    const img = document.createElement('img');
+    img.src = '/media/' + encodeURIComponent(key);
+    img.alt = 'Foto adicional';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox'; checkbox.name = 'remove_images'; checkbox.value = key;
+    label.append(img, checkbox, document.createTextNode('Quitar foto'));
+    document.getElementById('existingImages').append(label);
+  });
+  document.getElementById('productId').value = p.id;
+  Object.keys(p).forEach(k => {
+    const el = document.getElementById(k);
+    if (!el) return;
+    if (el.type === 'checkbox') el.checked = !!p[k];
+    else el.value = p[k] ?? '';
+  });
+  document.getElementById('saveButton').textContent = 'Actualizar producto';
+  document.getElementById('productForm').scrollIntoView({behavior:'smooth', block:'start'});
+}));
+document.getElementById('resetForm').addEventListener('click', () => {
+  document.getElementById('productForm').reset();
+  document.getElementById('productId').value = '';
+  document.getElementById('existingImages').replaceChildren();
+  document.getElementById('saveButton').textContent = 'Guardar producto';
+});
+</script>
+{% endblock %}
