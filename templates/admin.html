@@ -39,7 +39,7 @@
 
     <div class="tools">
       <label class="search"><span class="sr-only">Buscar</span><input id="aq" type="search" placeholder="Buscar perfume…" autocomplete="off"></label>
-      <select id="aSection" aria-label="Colección"><option value="">Todas las colecciones</option><option>Caballero</option><option>Dama</option><option>Árabes y nicho</option></select>
+      <select id="aSection" aria-label="Colección"><option value="">Todas las colecciones</option><option value="Caballero">Hombre</option><option value="Dama">Mujer</option><option>Árabes y nicho</option></select>
       <select id="aFilter" aria-label="Mostrar"><option value="">Todos</option><option value="noprice">Sin precio</option><option value="soldout">Agotados</option><option value="hidden">Ocultos</option><option value="featured">Destacados</option><option value="changed">Con cambios</option></select>
       <button type="button" class="btn ghost" id="bulkToggle" aria-expanded="false">Precio por lote</button>
     </div>
@@ -154,7 +154,7 @@
         <label>Tamaño<input name="size" maxlength="30" placeholder="100 ml"></label>
       </div>
       <div class="grid3">
-        <label>Colección<select name="section"><option>Caballero</option><option>Dama</option><option>Árabes y nicho</option></select></label>
+        <label>Colección<select name="section"><option value="Caballero">Hombre</option><option value="Dama">Mujer</option><option>Árabes y nicho</option></select></label>
         <label>Para<select name="gender"><option>Hombre</option><option>Mujer</option><option>Unisex</option></select></label>
         <label>Familia<select name="family"><option>Amaderada</option><option>Oriental</option><option>Dulce</option><option>Fresca</option><option>Acuática</option><option>Cítrica</option><option>Aromática</option><option>Floral</option><option>Frutal</option><option>Especiada</option></select></label>
       </div>

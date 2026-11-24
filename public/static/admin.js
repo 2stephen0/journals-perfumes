@@ -4,6 +4,7 @@
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const secLabel = s => ({Caballero:"Hombre", Dama:"Mujer"})[s] || s;
   const money = n => "$" + Number(n).toLocaleString("es-CO");
   const toast = msg => { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2600); };
 
@@ -82,7 +83,7 @@
     const items = list(), ch = new Set(changedIds());
     $("#rows").innerHTML = items.slice(0, shown).map(p => `
       <div class="tr ${p.hidden ? "is-hidden" : ""} ${ch.has(String(p.id)) ? "is-dirty" : ""}" role="row" data-id="${p.id}">
-        <span class="cell-name" role="cell"><img src="${esc(p.img)}" alt="" loading="lazy"><span><b>${esc(p.name)}</b><small>${esc(p.section)} · ${esc(p.family)} · ${esc(p.gender)}</small></span></span>
+        <span class="cell-name" role="cell"><img src="${esc(p.img)}" alt="" loading="lazy"><span><b>${esc(p.name)}</b><small>${esc(secLabel(p.section))} · ${esc(p.family)}${p.gender === "Unisex" ? " · Unisex" : ""}</small></span></span>
         <span role="cell"><input class="price" type="number" min="0" step="1000" value="${p.price ?? ""}" placeholder="Consultar" aria-label="Precio de ${esc(p.name)}"></span>
         <span role="cell"><label class="sw"><input type="checkbox" data-f="featured" ${p.featured ? "checked" : ""} aria-label="Destacado"><i></i></label><small class="m-l">Destacado</small></span>
         <span role="cell"><label class="sw"><input type="checkbox" data-f="soldout" ${p.soldout ? "checked" : ""} aria-label="Agotado"><i></i></label><small class="m-l">Agotado</small></span>
@@ -135,7 +136,7 @@
     const p = merged(BASE.find(x => String(x.id) === String(id)));
     editing = String(id);
     const f = $("#edForm");
-    $("#edImg").src = p.img; $("#edTitle").textContent = p.name; $("#edSection").textContent = p.section;
+    $("#edImg").src = p.img; $("#edTitle").textContent = p.name; $("#edSection").textContent = secLabel(p.section);
     f.name.value = p.name || ""; f.price.value = p.price ?? ""; f.size.value = p.size || "";
     f.section.value = p.section; f.gender.value = p.gender; f.family.value = p.family;
     f.featured.checked = !!p.featured; f.soldout.checked = !!p.soldout; f.hidden.checked = !!p.hidden;

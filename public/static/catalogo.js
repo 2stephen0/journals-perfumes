@@ -22,8 +22,8 @@
   const accColor = a => ACC[a] || "#9b909c";
   const famColor = f => (FAMILIES[f] || {c:"#9b909c"}).c;
   const SECTIONS = [
-    {key:"Caballero", t:"Caballero", s:"Carácter, madera y frescura", tint:"radial-gradient(circle at 50% 35%,rgba(74,134,224,.32),transparent 65%),linear-gradient(180deg,#151a24,#0f0d12)"},
-    {key:"Dama", t:"Dama", s:"Flores, dulzura y elegancia", tint:"radial-gradient(circle at 50% 35%,rgba(224,143,176,.32),transparent 65%),linear-gradient(180deg,#22151c,#0f0d12)"},
+    {key:"Caballero", t:"Hombre", s:"Carácter, madera y frescura", tint:"radial-gradient(circle at 50% 35%,rgba(74,134,224,.32),transparent 65%),linear-gradient(180deg,#151a24,#0f0d12)"},
+    {key:"Dama", t:"Mujer", s:"Flores, dulzura y elegancia", tint:"radial-gradient(circle at 50% 35%,rgba(224,143,176,.32),transparent 65%),linear-gradient(180deg,#22151c,#0f0d12)"},
     {key:"Árabes y nicho", t:"Árabes y nicho", s:"Oud, ámbar y exclusividad", tint:"radial-gradient(circle at 50% 35%,rgba(217,195,160,.32),transparent 65%),linear-gradient(180deg,#221c14,#0f0d12)"}
   ];
   const DAY = ["Fresca","Acuática","Cítrica","Aromática","Floral","Frutal"];
@@ -65,10 +65,12 @@
     return o;
   };
   const describe = p => p.desc || (p.notes ? `Abre con ${listText(p.notes.top)}, revela un corazón de ${listText(p.notes.heart)} y deja un fondo de ${listText(p.notes.base)}. ${FAMILIES[p.family]?.d || ""}` : (FAMILIES[p.family]?.d || "Consulta con nosotros para conocer más de esta fragancia."));
+  const secLabel = s => ({Caballero:"Hombre", Dama:"Mujer"})[s] || s;
   const allNotes = p => p.notes ? [...p.notes.top, ...p.notes.heart, ...p.notes.base] : [];
 
   function toast(msg) {
-    const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+    const t = $("#toast"); const host = document.querySelector("dialog[open]") || document.body; if (t.parentElement !== host) host.append(t);
+    t.textContent = msg; t.classList.add("show");
     clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2200);
   }
   function bump(el) { el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
@@ -135,7 +137,7 @@
         <span class="count">${list.length} fragancias</span><div class="bottles">${imgs}</div><h3>${esc(s.t)}</h3><p>${esc(s.s)} →</p></button>`;
     }).join("");
     $$("#collectionGrid .collection").forEach(b => b.addEventListener("click", () => { setFilter({section:b.dataset.section, family:""}); goCatalog(); }));
-    $("#sectionTabs").innerHTML = [{key:"", t:"Todas"}, ...SECTIONS].map(s => `<button type="button" data-sec="${esc(s.key)}" aria-pressed="${s.key === state.section}">${esc(s.t)}</button>`).join("");
+    $("#sectionTabs").innerHTML = [{key:"", t:"Todos"}, ...SECTIONS].map(s => `<button type="button" data-sec="${esc(s.key)}" aria-pressed="${s.key === state.section}">${esc(s.t)}</button>`).join("");
     $$("#sectionTabs button").forEach(b => b.addEventListener("click", () => setFilter({section:b.dataset.sec})));
   }
 
@@ -192,7 +194,7 @@
   }
   function setFilter(patch) {
     Object.assign(state, patch, {shown: PAGE});
-    for (const k of ["q","gender","family","moment","season","sort"]) $("#" + k).value = state[k];
+    for (const k of ["q","family","moment","season","sort"]) $("#" + k).value = state[k];
     $("#onlyFavs").setAttribute("aria-pressed", state.favs);
     $$("#sectionTabs button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sec === state.section));
     render();
@@ -224,7 +226,7 @@
   }
   function catalogEvents() {
     let t; $("#q").addEventListener("input", e => { clearTimeout(t); t = setTimeout(() => setFilter({q:e.target.value}), 160); });
-    for (const k of ["gender","family","moment","season","sort"]) $("#" + k).addEventListener("change", e => setFilter({[k]: e.target.value}));
+    for (const k of ["family","moment","season","sort"]) $("#" + k).addEventListener("change", e => setFilter({[k]: e.target.value}));
     $("#onlyFavs").addEventListener("click", () => setFilter({favs:!state.favs}));
     $("#clearFilters").addEventListener("click", () => setFilter({q:"", section:"", gender:"", family:"", moment:"", season:"", favs:false}));
     $("#more").addEventListener("click", () => { state.shown += PAGE; render(); });
@@ -279,7 +281,7 @@
     if (p.soldout) { toast("Este perfume está agotado por ahora"); return; }
     const l = cart.find(x => String(x.id) === String(id));
     l ? l.qty++ : cart.push({id: p.id, qty: 1});
-    saveCart(); bump($("#cartCount")); toast(`${p.name} añadido a la bolsa`);
+    saveCart(); bump($("#cartCount")); addedPop(p);
     if (imgEl && !reduced()) {
       const a = imgEl.getBoundingClientRect(), b = $("#openCart").getBoundingClientRect();
       const f = document.createElement("img"); f.src = imgEl.src; f.className = "fly"; f.alt = "";
@@ -288,6 +290,17 @@
       requestAnimationFrame(() => { f.style.transform = `translate(${b.left - a.left - a.width / 2 + 57}px,${b.top - a.top - a.height / 2 + 57}px) scale(.2)`; f.style.opacity = ".3"; });
       setTimeout(() => f.remove(), 850);
     }
+  }
+  // aviso de "añadido a la bolsa"
+  function addedPop(p) {
+    const box = $("#added");
+    // Las ventanas abiertas (dialog) quedan por encima de todo: el aviso se muestra dentro de ellas.
+    const host = $("dialog[open]") || document.body; if (box.parentElement !== host) host.append(box);
+    $("#addedImg").src = p.img; $("#addedName").textContent = p.name;
+    const n = cart.reduce((s, l) => s + (byId(l.id) ? l.qty : 0), 0);
+    $("#addedCount").textContent = `Tienes ${n} ${n === 1 ? "perfume" : "perfumes"} en la bolsa`;
+    box.hidden = false; box.classList.remove("show"); void box.offsetWidth; box.classList.add("show");
+    clearTimeout(addedPop.t); addedPop.t = setTimeout(() => box.classList.remove("show"), 3500);
   }
   function renderCart() {
     const items = cart.map(l => ({...l, p: byId(l.id)})).filter(l => l.p);
@@ -306,6 +319,8 @@
     const open = () => { document.body.classList.add("cart-open", "locked"); $("#cart").setAttribute("aria-hidden", "false"); $("#closeCart").focus(); };
     const close = () => { document.body.classList.remove("cart-open", "locked"); $("#cart").setAttribute("aria-hidden", "true"); };
     $("#openCart").addEventListener("click", open);
+    $("#addedView").addEventListener("click", () => { $("#added").classList.remove("show"); if ($("#detail").open) $("#detail").close(); if ($("#cmp").open) $("#cmp").close(); open(); });
+    $("#addedClose").addEventListener("click", () => $("#added").classList.remove("show"));
     $("#closeCart").addEventListener("click", close);
     $("#backdrop").addEventListener("click", close);
     document.addEventListener("keydown", e => { if (e.key === "Escape" && document.body.classList.contains("cart-open")) close(); });
@@ -320,7 +335,7 @@
     $("#checkout").addEventListener("click", () => {
       const items = cart.map(l => ({...l, p: byId(l.id)})).filter(l => l.p);
       if (!items.length) return;
-      const lines = items.map(l => `• ${l.qty} x ${l.p.name} (${l.p.section})${l.p.price ? " – " + money(l.p.price) : ""}`).join("\n");
+      const lines = items.map(l => `• ${l.qty} x ${l.p.name} (${secLabel(l.p.section)})${l.p.price ? " – " + money(l.p.price) : ""}`).join("\n");
       const text = `Hola ${STORE.name}, quiero hacer este pedido:\n${lines}\n\n¿Me confirman precio total, envío y forma de pago? Gracias.`;
       const url = waLink(text);
       if (url) window.open(url, "_blank", "noopener");
@@ -353,11 +368,11 @@
     const c = famColor(p.family);
     $("#dStage").style.setProperty("--c", c);
     const img = $("#dImg"); img.src = p.img; img.alt = p.name;
-    $("#dSection").textContent = p.section;
+    $("#dSection").textContent = secLabel(p.section);
     $(".detail-copy .inspired").textContent = p.section === "Novedades" ? (p.brand || "Novedad") : "Inspirado en";
     $("#dName").textContent = p.name;
     $("#dTagline").textContent = p.tagline || "";
-    $("#dTags").innerHTML = `<span class="tag" style="--c:${c}">${esc(p.family)}</span><span class="tag">${esc(p.gender)}</span>${p.time ? `<span class="tag">${TIME[p.time]}</span>` : ""}${p.size ? `<span class="tag">${esc(p.size)}</span>` : ""}`;
+    $("#dTags").innerHTML = `<span class="tag" style="--c:${c}">${esc(p.family)}</span>${p.gender === "Unisex" ? `<span class="tag">Unisex</span>` : ""}${p.time ? `<span class="tag">${TIME[p.time]}</span>` : ""}${p.size ? `<span class="tag">${esc(p.size)}</span>` : ""}`;
 
     $("#pane-desc").innerHTML = `<p class="d-desc">${esc(describe(p))}</p>
       <h4>Ideal para</h4><div class="occ">${occasions(p).map(o => `<span>${esc(o)}</span>`).join("")}</div>`;
@@ -387,7 +402,7 @@
     $("#dCmp").setAttribute("aria-pressed", cmp.includes(String(p.id)));
     $("#dAdd").onclick = () => addToCart(p.id, img);
     $("#dAdd").disabled = !!p.soldout; $("#dAdd").textContent = p.soldout ? "Agotado por ahora" : "Añadir a la bolsa";
-    const wa = waLink(`Hola, quiero información sobre el perfume inspirado en ${p.name} (${p.section}).`);
+    const wa = waLink(`Hola, quiero información sobre el perfume inspirado en ${p.name} (${secLabel(p.section)}).`);
     const dWa = $("#dWa"); dWa.href = wa || "#contacto"; wa ? (dWa.target = "_blank", dWa.rel = "noopener") : dWa.removeAttribute("target");
     dWa.onclick = wa ? null : () => $("#detail").close();
     const shared = x => (x.accords || []).filter(a => (p.accords || []).includes(a)).length;
@@ -444,7 +459,7 @@
     const row = (label, fn) => `<div class="cr"><span class="cl">${label}</span>${ps.map(p => `<div>${fn(p)}</div>`).join("")}</div>`;
     $("#cmpTable").style.setProperty("--n", ps.length);
     $("#cmpTable").innerHTML =
-      `<div class="cr head"><span class="cl"></span>${ps.map(p => `<div><img src="${esc(p.img)}" alt=""><b>${esc(p.name)}</b><small>${esc(p.section)}</small></div>`).join("")}</div>` +
+      `<div class="cr head"><span class="cl"></span>${ps.map(p => `<div><img src="${esc(p.img)}" alt=""><b>${esc(p.name)}</b><small>${esc(secLabel(p.section))}</small></div>`).join("")}</div>` +
       row("Familia", p => `<span class="dot" style="--c:${famColor(p.family)}"></span> ${esc(p.family)}`) +
       row("Para", p => esc(p.gender)) +
       row("Acordes", p => (p.accords || []).map(a => `<span class="mini-acc" style="--ac:${accColor(a)}">${esc(a)}</span>`).join("")) +
@@ -507,12 +522,12 @@
       body.innerHTML = `<p class="kicker">Tu resultado</p><h2 id="quizTitle">Estos aromas son para ti</h2>
         <p class="sub">Encontramos ${res.length} fragancias según tu estilo. Aquí tienes 8 sugerencias.</p>
         <div class="quiz-results">${top.map(p => `<button type="button" style="--c:${famColor(p.family)}" data-id="${esc(p.id)}"><img src="${esc(p.img)}" alt="" loading="lazy"><b>${esc(p.name)}</b><small>${esc(p.family)}</small></button>`).join("")}</div>
-        <div class="quiz-foot"><button type="button" class="button button-gold" data-all>Ver todas en el catálogo</button><button type="button" class="button button-ghost" data-again>Repetir</button></div>`;
+        <div class="quiz-foot"><button type="button" class="button button-gold" data-all>Ver más en el catálogo</button><button type="button" class="button button-ghost" data-again>Repetir</button></div>`;
       $$(".quiz-results [data-id]", body).forEach(b => b.addEventListener("click", () => { $("#quiz").close(); openDetail(b.dataset.id); }));
       $("[data-again]", body).addEventListener("click", () => { quiz.step = 0; quiz.a = {}; renderQuiz(); });
       $("[data-all]", body).addEventListener("click", () => {
         $("#quiz").close();
-        setFilter({gender: quiz.a.gender || "", family: quiz.a.family || "", moment: quiz.a.moment || "", season:"", section:"", q:"", favs:false});
+        setFilter({section: {Hombre:"Caballero", Mujer:"Dama"}[quiz.a.gender] || "", family: quiz.a.family || "", moment: quiz.a.moment || "", season:"", section:"", q:"", favs:false});
         goCatalog();
       });
     }
