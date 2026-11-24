@@ -142,7 +142,7 @@
 <div class="drawer-bg" id="edBg"></div>
 <aside class="drawer" id="editor" aria-label="Editar perfume" aria-hidden="true">
   <div class="ed-head">
-    <img id="edImg" alt="">
+    <div class="ed-photo"><img id="edImg" alt=""><label class="ed-photo-btn">Cambiar foto<input type="file" id="edFile" accept=".jpg,.jpeg,.png,.webp" hidden></label></div>
     <div><p class="kicker" id="edSection"></p><h2 id="edTitle">Editar perfume</h2></div>
     <button type="button" class="x" id="edClose" aria-label="Cerrar">×</button>
   </div>
@@ -161,6 +161,7 @@
         <label>Para<select name="gender"><option>Hombre</option><option>Mujer</option><option>Unisex</option></select></label>
         <label>Familia<select name="family"><option>Amaderada</option><option>Oriental</option><option>Dulce</option><option>Fresca</option><option>Acuática</option><option>Cítrica</option><option>Aromática</option><option>Floral</option><option>Frutal</option><option>Especiada</option></select></label>
       </div>
+      <label class="check orig"><input type="checkbox" name="original"> Original de la marca <span class="help">Si lo marcas, se muestra solo la marca (sin “Inspirado en”). Márcalo solo si el producto que vendes es el original.</span></label>
       <div class="checks"><label class="check"><input type="checkbox" name="featured"> Destacado</label><label class="check"><input type="checkbox" name="soldout"> Agotado</label><label class="check"><input type="checkbox" name="hidden"> Oculto en la tienda</label></div>
     </fieldset>
     <fieldset><legend>Descripción</legend>

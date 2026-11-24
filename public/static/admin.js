@@ -47,7 +47,7 @@
   let saved = {};         // cambios guardados en el servidor
   let draft = {};         // cambios en edición
   let shown = 40;
-  const FIELDS = ["name","brand","price","size","section","gender","family","tagline","desc","notes","accords","time","longevity","sillage","seasons","featured","soldout","hidden"];
+  const FIELDS = ["name","brand","original","img","price","size","section","gender","family","tagline","desc","notes","accords","time","longevity","sillage","seasons","featured","soldout","hidden"];
   const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
   const merged = p => ({...p, ...(draft[p.id] || {})});
   const changedIds = () => Object.keys(draft).filter(id => !same(draft[id], saved[id] || {}));
@@ -129,7 +129,7 @@
   });
 
   // ---------- editor completo ----------
-  let editing = null;
+  let editing = null, edPhoto = null;
   const csv = a => (a || []).join(", ");
   const fromCsv = s => String(s || "").split(",").map(x => x.trim()).filter(Boolean);
   function openEditor(id) {
@@ -137,7 +137,7 @@
     editing = String(id);
     const f = $("#edForm");
     $("#edImg").src = p.img; $("#edTitle").textContent = p.name; $("#edSection").textContent = secLabel(p.section);
-    f.name.value = p.name || ""; f.brand.value = p.brand || ""; f.price.value = p.price ?? ""; f.size.value = p.size || "";
+    f.name.value = p.name || ""; f.brand.value = p.brand || ""; f.original.checked = !!p.original; edPhoto = p.img; f.price.value = p.price ?? ""; f.size.value = p.size || "";
     f.section.value = p.section; f.gender.value = p.gender; f.family.value = p.family;
     f.featured.checked = !!p.featured; f.soldout.checked = !!p.soldout; f.hidden.checked = !!p.hidden;
     f.tagline.value = p.tagline || ""; f.desc.value = p.desc || "";
@@ -154,7 +154,7 @@
     if (!f.name.value.trim()) { toast("El nombre no puede quedar vacío"); f.name.focus(); return; }
     const price = f.price.value.trim() === "" ? null : clamp(f.price.value, 0, 100000000, null);
     const vals = {
-      name: f.name.value.trim(), brand: f.brand.value.trim(), price, size: f.size.value.trim(), section: f.section.value, gender: f.gender.value, family: f.family.value,
+      name: f.name.value.trim(), brand: f.brand.value.trim(), original: f.original.checked, img: edPhoto, price, size: f.size.value.trim(), section: f.section.value, gender: f.gender.value, family: f.family.value,
       tagline: f.tagline.value.trim(), desc: f.desc.value.trim() || null,
       notes: {top: fromCsv(f.top.value), heart: fromCsv(f.heart.value), base: fromCsv(f.base.value)},
       accords: fromCsv(f.accords.value).slice(0, 5), time: f.time.value,
@@ -168,6 +168,22 @@
   $("#edReset").addEventListener("click", () => {
     if (!editing || !confirm("¿Volver este perfume a sus datos originales?")) return;
     delete draft[editing]; closeEditor(); render(); toast("Perfume restaurado. Recuerda guardar.");
+  });
+  // cambiar la foto de un perfume del catálogo
+  $("#edFile").addEventListener("change", async e => {
+    const file = e.target.files[0]; e.target.value = "";
+    if (!file || !editing) return;
+    if (file.size > 4 * 1024 * 1024) { toast("La foto debe pesar menos de 4 MB"); return; }
+    const btn = $(".ed-photo-btn"); btn.classList.add("busy");
+    try {
+      const fd = new FormData(); fd.append("photo", file);
+      const r = await fetch("/admin/catalog/photo", {method:"POST", body: fd, credentials:"same-origin"});
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.img) throw new Error(data.error || "No se pudo subir la foto.");
+      edPhoto = data.img; $("#edImg").src = data.img;
+      toast("Foto subida. Toca Aplicar y luego Guardar cambios.");
+    } catch (err) { toast(err.message || "No se pudo subir la foto."); }
+    finally { btn.classList.remove("busy"); }
   });
   $("#edClose").addEventListener("click", closeEditor);
   $("#edBg").addEventListener("click", closeEditor);

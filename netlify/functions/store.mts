@@ -40,7 +40,8 @@ function cleanOverrides(input: unknown): Record<string, Override> {
     if (Array.isArray(r.seasons) && r.seasons.length === 4 && r.seasons.every(x => int(x, 0, 5) !== undefined)) o.seasons = r.seasons;
     const acc = list(r.accords); if (acc) o.accords = acc.slice(0, 5);
     if (r.notes && typeof r.notes === 'object') { const n = r.notes as Record<string, unknown>; const top = list(n.top), heart = list(n.heart), base = list(n.base); if (top && heart && base) o.notes = {top, heart, base}; }
-    for (const k of ['featured','hidden','soldout']) if (typeof r[k] === 'boolean') o[k] = r[k];
+    for (const k of ['featured','hidden','soldout','original']) if (typeof r[k] === 'boolean') o[k] = r[k];
+    if (typeof r.img === 'string' && /^\/media\/[\w-]+\.(png|jpg|jpeg|webp|gif)$/.test(r.img)) o.img = r.img;
     if (Object.keys(o).length) out[id] = o;
   }
   return out;
@@ -84,6 +85,27 @@ export default async (req: Request) => {
     if (req.method === 'POST') {
       if (req.headers.get('origin') !== url.origin) return new Response('Solicitud no permitida',{status:403});
       if (Number(req.headers.get('content-length') || 0) > 5*1024*1024) return new Response('La imagen supera el límite permitido',{status:413});
+      if (path === '/admin/catalog/photo') {
+        if (!isAdmin) return Response.json({error:'Necesitas una cuenta con el rol admin.'},{status:403});
+        try {
+          const file = (await req.formData()).get('photo');
+          if (!(file instanceof File) || !file.size) throw new InputError('Selecciona una foto.');
+          if (file.size > 4*1024*1024) throw new InputError('La foto debe pesar menos de 4 MB.');
+          const ext: Record<string,string> = {'image/png':'png','image/jpeg':'jpg','image/webp':'webp'};
+          if (!ext[file.type]) throw new InputError('Usa una foto PNG, JPG o WEBP.');
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          const dec = (a: number, b: number) => new TextDecoder().decode(bytes.slice(a, b));
+          const valid = file.type === 'image/png' ? bytes[0]===137 && bytes[1]===80 && bytes[2]===78 && bytes[3]===71
+            : file.type === 'image/jpeg' ? bytes[0]===255 && bytes[1]===216 && bytes[2]===255
+            : dec(0,4) === 'RIFF' && dec(8,12) === 'WEBP';
+          if (!valid) throw new InputError('El archivo no es una imagen válida.');
+          const key = crypto.randomUUID() + '.' + ext[file.type];
+          await getStore('product-images').set(key, bytes.buffer as ArrayBuffer, {metadata:{contentType:file.type}});
+          return Response.json({img:'/media/' + key},{headers:{'Cache-Control':'no-store'}});
+        } catch (error) {
+          return Response.json({error: error instanceof InputError ? error.message : 'No se pudo subir la foto.'},{status:400});
+        }
+      }
       if (path === '/admin/catalog') {
         if (!isAdmin) return Response.json({error:'Necesitas una cuenta con el rol admin.'},{status:403});
         try {

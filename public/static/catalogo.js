@@ -65,7 +65,8 @@
     return o;
   };
   const describe = p => p.desc || (p.notes ? `Abre con ${listText(p.notes.top)}, revela un corazón de ${listText(p.notes.heart)} y deja un fondo de ${listText(p.notes.base)}. ${FAMILIES[p.family]?.d || ""}` : (FAMILIES[p.family]?.d || "Consulta con nosotros para conocer más de esta fragancia."));
-  const inspired = p => p.section === "Novedades" ? (p.brand || "Novedad") : p.brand ? `Inspirado en ${p.brand}` : "Inspirado en";
+  const inspired = p => p.section === "Novedades" ? (p.brand || "Novedad") : p.original ? (p.brand || "Original") : p.brand ? `Inspirado en ${p.brand}` : "Inspirado en";
+  const brandNote = p => !p.brand || p.section === "Novedades" ? "" : p.original ? ` de ${p.brand}` : ` (inspirado en ${p.brand})`;
   const secLabel = s => ({Caballero:"Hombre", Dama:"Mujer"})[s] || s;
   const allNotes = p => p.notes ? [...p.notes.top, ...p.notes.heart, ...p.notes.base] : [];
 
@@ -91,7 +92,7 @@
         if (s.wa) STORE.whatsapp = s.wa;
         // Cambios hechos desde el panel de administración (nombre, precio, notas, oculto, agotado…).
         const ov = api.overrides && typeof api.overrides === "object" ? api.overrides : {};
-        P = P.map(p => ov[p.id] ? {...p, ...ov[p.id], id: p.id, img: p.img} : p).filter(p => !p.hidden);
+        P = P.map(p => ov[p.id] ? {...p, ...ov[p.id], id: p.id, img: /^\/media\/[\w-]+\.(png|jpe?g|webp|gif)$/.test(ov[p.id].img || "") ? ov[p.id].img : p.img} : p).filter(p => !p.hidden);
         const extra = (api.products || []).filter(p => p.image).map(p => ({
           id: "t" + p.id, name: p.name, section: "Novedades", gender: ["Hombre","Mujer","Unisex"].includes(p.category) ? p.category : "Unisex",
           family: FAMILIES[p.fragrance] ? p.fragrance : (p.fragrance || "Especial"), img: p.image, price: p.price || null, size: p.size || "",
@@ -342,7 +343,7 @@
     $("#checkout").addEventListener("click", () => {
       const items = cart.map(l => ({...l, p: byId(l.id)})).filter(l => l.p);
       if (!items.length) return;
-      const lines = items.map(l => `• ${l.qty} x ${l.p.name}${l.p.brand && l.p.section !== "Novedades" ? " (inspirado en " + l.p.brand + ")" : ""}${l.p.price ? " – " + money(l.p.price) : ""}`).join("\n");
+      const lines = items.map(l => `• ${l.qty} x ${l.p.name}${brandNote(l.p)}${l.p.price ? " – " + money(l.p.price) : ""}`).join("\n");
       const text = `Hola ${STORE.name}, quiero hacer este pedido:\n${lines}\n\n¿Me confirman precio total, envío y forma de pago? Gracias.`;
       const url = waLink(text);
       if (url) window.open(url, "_blank", "noopener");
@@ -409,7 +410,7 @@
     $("#dCmp").setAttribute("aria-pressed", cmp.includes(String(p.id)));
     $("#dAdd").onclick = () => addToCart(p.id, img);
     $("#dAdd").disabled = !!p.soldout; $("#dAdd").textContent = p.soldout ? "Agotado por ahora" : "Añadir a la bolsa";
-    const wa = waLink(`Hola, quiero información sobre el perfume inspirado en ${p.name}${p.brand && p.section !== "Novedades" ? " de " + p.brand : ""} (${secLabel(p.section)}).`);
+    const wa = waLink(`Hola, quiero información sobre el perfume ${p.name}${brandNote(p)}, ${secLabel(p.section)}.`);
     const dWa = $("#dWa"); dWa.href = wa || "#contacto"; wa ? (dWa.target = "_blank", dWa.rel = "noopener") : dWa.removeAttribute("target");
     dWa.onclick = wa ? null : () => $("#detail").close();
     const shared = x => (x.accords || []).filter(a => (p.accords || []).includes(a)).length;
