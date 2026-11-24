@@ -89,6 +89,10 @@
         <span class="note-label">Busca por nota</span>
         <div class="note-chips" id="noteChips"></div>
       </div>
+      <div class="note-strip brand-strip">
+        <span class="note-label">Busca por marca</span>
+        <div class="note-chips" id="brandChips"></div>
+      </div>
     </div>
   </section>
 
@@ -96,8 +100,9 @@
   <section class="catalog" id="catalogo">
     <div class="section-heading reveal"><div><p class="kicker">La colección completa</p><h2>Catálogo</h2></div></div>
     <div class="toolbar" id="toolbar">
-      <label class="search"><span class="sr-only">Buscar perfume</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><input id="q" type="search" placeholder="Buscar por nombre o nota (vainilla, oud…)" autocomplete="off"></label>
+      <label class="search"><span class="sr-only">Buscar perfume</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><input id="q" type="search" placeholder="Buscar por nombre, marca o nota…" autocomplete="off"></label>
       <div class="seg" role="group" aria-label="Para quién" id="sectionTabs"></div>
+      <select id="brand" aria-label="Marca de referencia"><option value="">Todas las marcas</option></select>
       <select id="family" aria-label="Familia olfativa"><option value="">Todas las familias</option></select>
       <select id="moment" aria-label="Momento"><option value="">Día y noche</option><option value="D">Para el día</option><option value="N">Para la noche</option></select>
       <select id="season" aria-label="Temporada"><option value="">Todo el año</option><option value="0">Primavera</option><option value="1">Verano</option><option value="2">Otoño</option><option value="3">Invierno</option></select>

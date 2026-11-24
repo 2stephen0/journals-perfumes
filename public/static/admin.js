@@ -47,7 +47,7 @@
   let saved = {};         // cambios guardados en el servidor
   let draft = {};         // cambios en edición
   let shown = 40;
-  const FIELDS = ["name","price","size","section","gender","family","tagline","desc","notes","accords","time","longevity","sillage","seasons","featured","soldout","hidden"];
+  const FIELDS = ["name","brand","price","size","section","gender","family","tagline","desc","notes","accords","time","longevity","sillage","seasons","featured","soldout","hidden"];
   const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
   const merged = p => ({...p, ...(draft[p.id] || {})});
   const changedIds = () => Object.keys(draft).filter(id => !same(draft[id], saved[id] || {}));
@@ -76,14 +76,14 @@
     const q = norm($("#aq").value).trim(), sec = $("#aSection").value, f = $("#aFilter").value;
     const ch = new Set(changedIds());
     return BASE.map(merged).filter(p =>
-      (!sec || p.section === sec) && (!q || norm(p.name + " " + p.family).includes(q)) &&
+      (!sec || p.section === sec) && (!q || norm(p.name + " " + p.family + " " + (p.brand || "")).includes(q)) &&
       (!f || (f === "noprice" && !p.price) || (f === "soldout" && p.soldout) || (f === "hidden" && p.hidden) || (f === "featured" && p.featured) || (f === "changed" && (ch.has(String(p.id)) || saved[p.id]))));
   }
   function render() {
     const items = list(), ch = new Set(changedIds());
     $("#rows").innerHTML = items.slice(0, shown).map(p => `
       <div class="tr ${p.hidden ? "is-hidden" : ""} ${ch.has(String(p.id)) ? "is-dirty" : ""}" role="row" data-id="${p.id}">
-        <span class="cell-name" role="cell"><img src="${esc(p.img)}" alt="" loading="lazy"><span><b>${esc(p.name)}</b><small>${esc(secLabel(p.section))} · ${esc(p.family)}${p.gender === "Unisex" ? " · Unisex" : ""}</small></span></span>
+        <span class="cell-name" role="cell"><img src="${esc(p.img)}" alt="" loading="lazy"><span><b>${esc(p.name)}</b><small>${p.brand ? esc(p.brand) + " · " : ""}${esc(secLabel(p.section))} · ${esc(p.family)}${p.gender === "Unisex" ? " · Unisex" : ""}</small></span></span>
         <span role="cell"><input class="price" type="number" min="0" step="1000" value="${p.price ?? ""}" placeholder="Consultar" aria-label="Precio de ${esc(p.name)}"></span>
         <span role="cell"><label class="sw"><input type="checkbox" data-f="featured" ${p.featured ? "checked" : ""} aria-label="Destacado"><i></i></label><small class="m-l">Destacado</small></span>
         <span role="cell"><label class="sw"><input type="checkbox" data-f="soldout" ${p.soldout ? "checked" : ""} aria-label="Agotado"><i></i></label><small class="m-l">Agotado</small></span>
@@ -137,7 +137,7 @@
     editing = String(id);
     const f = $("#edForm");
     $("#edImg").src = p.img; $("#edTitle").textContent = p.name; $("#edSection").textContent = secLabel(p.section);
-    f.name.value = p.name || ""; f.price.value = p.price ?? ""; f.size.value = p.size || "";
+    f.name.value = p.name || ""; f.brand.value = p.brand || ""; f.price.value = p.price ?? ""; f.size.value = p.size || "";
     f.section.value = p.section; f.gender.value = p.gender; f.family.value = p.family;
     f.featured.checked = !!p.featured; f.soldout.checked = !!p.soldout; f.hidden.checked = !!p.hidden;
     f.tagline.value = p.tagline || ""; f.desc.value = p.desc || "";
@@ -154,7 +154,7 @@
     if (!f.name.value.trim()) { toast("El nombre no puede quedar vacío"); f.name.focus(); return; }
     const price = f.price.value.trim() === "" ? null : clamp(f.price.value, 0, 100000000, null);
     const vals = {
-      name: f.name.value.trim(), price, size: f.size.value.trim(), section: f.section.value, gender: f.gender.value, family: f.family.value,
+      name: f.name.value.trim(), brand: f.brand.value.trim(), price, size: f.size.value.trim(), section: f.section.value, gender: f.gender.value, family: f.family.value,
       tagline: f.tagline.value.trim(), desc: f.desc.value.trim() || null,
       notes: {top: fromCsv(f.top.value), heart: fromCsv(f.heart.value), base: fromCsv(f.base.value)},
       accords: fromCsv(f.accords.value).slice(0, 5), time: f.time.value,

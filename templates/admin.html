@@ -148,7 +148,10 @@
   </div>
   <form class="form ed-body" id="edForm">
     <fieldset><legend>Básico</legend>
-      <label>Nombre de referencia<input name="name" required maxlength="80"></label>
+      <div class="grid2">
+        <label>Nombre de referencia<input name="name" required maxlength="80"></label>
+        <label>Marca (inspirado en)<input name="brand" maxlength="60" placeholder="Ej. Paco Rabanne"></label>
+      </div>
       <div class="grid2">
         <label>Precio (COP)<input name="price" type="number" min="0" step="1000" placeholder="Sin precio = “Consultar”"></label>
         <label>Tamaño<input name="size" maxlength="30" placeholder="100 ml"></label>

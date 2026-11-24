@@ -30,7 +30,7 @@ function cleanOverrides(input: unknown): Record<string, Override> {
   for (const [id, raw] of entries) {
     if (!/^\d{1,4}$/.test(id) || !raw || typeof raw !== 'object') continue;
     const r = raw as Record<string, unknown>, o: Override = {};
-    for (const [k, max] of [['name',80],['tagline',220],['desc',1200],['size',30]] as const) { const v = text(r[k], max); if (v !== undefined) o[k] = v; }
+    for (const [k, max] of [['name',80],['brand',60],['tagline',220],['desc',1200],['size',30]] as const) { const v = text(r[k], max); if (v !== undefined) o[k] = v; }
     if (['Caballero','Dama','Árabes y nicho'].includes(String(r.section))) o.section = r.section;
     if (['Hombre','Mujer','Unisex'].includes(String(r.gender))) o.gender = r.gender;
     if (['Amaderada','Oriental','Dulce','Fresca','Acuática','Cítrica','Aromática','Floral','Frutal','Especiada'].includes(String(r.family))) o.family = r.family;

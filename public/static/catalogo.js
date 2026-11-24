@@ -37,7 +37,7 @@
   let STORE = {name:"Journals Perfumes", tagline:"Tu historia tiene un aroma", whatsapp:"", currency:"COP"};
   let P = [];
   const PAGE = 24;
-  const state = {q:"", section:"", gender:"", family:"", moment:"", season:"", sort:"cat", favs:false, shown:PAGE};
+  const state = {q:"", section:"", gender:"", brand:"", family:"", moment:"", season:"", sort:"cat", favs:false, shown:PAGE};
 
   const store = {
     get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
@@ -65,6 +65,7 @@
     return o;
   };
   const describe = p => p.desc || (p.notes ? `Abre con ${listText(p.notes.top)}, revela un corazón de ${listText(p.notes.heart)} y deja un fondo de ${listText(p.notes.base)}. ${FAMILIES[p.family]?.d || ""}` : (FAMILIES[p.family]?.d || "Consulta con nosotros para conocer más de esta fragancia."));
+  const inspired = p => p.section === "Novedades" ? (p.brand || "Novedad") : p.brand ? `Inspirado en ${p.brand}` : "Inspirado en";
   const secLabel = s => ({Caballero:"Hombre", Dama:"Mujer"})[s] || s;
   const allNotes = p => p.notes ? [...p.notes.top, ...p.notes.heart, ...p.notes.base] : [];
 
@@ -169,6 +170,11 @@
     }));
     preview(fams[0]);
     $("#noteChips").innerHTML = NOTE_CHIPS.filter(n => P.some(p => allNotes(p).some(x => norm(x).includes(norm(n))))).map(n => `<button type="button" class="nchip" data-note="${esc(n)}">${esc(n)}</button>`).join("");
+    const bc = {}; P.forEach(p => { if (p.brand && p.section !== "Novedades") bc[p.brand] = (bc[p.brand] || 0) + 1; });
+    const brands = Object.keys(bc).sort((a, b) => a.localeCompare(b, "es"));
+    $("#brand").innerHTML = `<option value="">Todas las marcas</option>` + brands.map(b => `<option value="${esc(b)}">${esc(b)} (${bc[b]})</option>`).join("");
+    $("#brandChips").innerHTML = Object.entries(bc).sort((a, b) => b[1] - a[1]).slice(0, 14).map(([b]) => `<button type="button" class="nchip" data-brand="${esc(b)}">${esc(b)}</button>`).join("");
+    $$("#brandChips .nchip").forEach(b => b.addEventListener("click", () => { setFilter({brand:b.dataset.brand, q:"", family:"", section:""}); goCatalog(); }));
     $$("#noteChips .nchip").forEach(b => b.addEventListener("click", () => { setFilter({q:b.dataset.note, family:"", section:""}); goCatalog(); }));
   }
   const goCatalog = () => $("#catalogo").scrollIntoView({behavior: reduced() ? "auto" : "smooth"});
@@ -179,6 +185,7 @@
     let list = P.filter(p =>
       (!state.section || p.section === state.section) &&
       (!state.gender || p.gender === state.gender || (p.gender === "Unisex" && state.gender !== "Unisex")) &&
+      (!state.brand || p.brand === state.brand) &&
       (!state.family || p.family === state.family) &&
       (!state.moment || p.time === state.moment || p.time === "DN") &&
       (state.season === "" || (p.seasons || [3,3,3,3])[+state.season] >= 3) &&
@@ -194,7 +201,7 @@
   }
   function setFilter(patch) {
     Object.assign(state, patch, {shown: PAGE});
-    for (const k of ["q","family","moment","season","sort"]) $("#" + k).value = state[k];
+    for (const k of ["q","brand","family","moment","season","sort"]) $("#" + k).value = state[k];
     $("#onlyFavs").setAttribute("aria-pressed", state.favs);
     $$("#sectionTabs button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sec === state.section));
     render();
@@ -207,7 +214,7 @@
         ${p.soldout ? `<span class="flag out">Agotado</span>` : p.featured ? `<span class="flag">Destacado</span>` : ""}</div>
       <button type="button" class="fav" data-fav aria-pressed="${fav}" aria-label="${fav ? "Quitar de" : "Guardar en"} favoritos"><svg><use href="#i-heart"/></svg></button>
       <div class="card-info">
-        <p class="inspired">${p.section === "Novedades" ? esc(p.brand || "Novedad") : "Inspirado en"}</p>
+        <p class="inspired">${esc(inspired(p))}</p>
         <h3><button type="button" data-open>${esc(p.name)}</button></h3>
         <div class="meta"><span class="dot"></span>${esc(p.family)} · ${esc(p.gender)}</div>
         ${p.tagline ? `<p class="card-tag">${esc(p.tagline)}</p>` : ""}
@@ -222,13 +229,13 @@
     $("#resultCount").textContent = `${list.length} ${list.length === 1 ? "perfume" : "perfumes"}${state.q ? ` con “${state.q}”` : ""}`;
     $("#empty").hidden = list.length > 0;
     $("#more").parentElement.hidden = state.shown >= list.length;
-    $("#clearFilters").hidden = !(state.q || state.section || state.gender || state.family || state.moment || state.season || state.favs);
+    $("#clearFilters").hidden = !(state.q || state.section || state.brand || state.family || state.moment || state.season || state.favs);
   }
   function catalogEvents() {
     let t; $("#q").addEventListener("input", e => { clearTimeout(t); t = setTimeout(() => setFilter({q:e.target.value}), 160); });
-    for (const k of ["family","moment","season","sort"]) $("#" + k).addEventListener("change", e => setFilter({[k]: e.target.value}));
+    for (const k of ["brand","family","moment","season","sort"]) $("#" + k).addEventListener("change", e => setFilter({[k]: e.target.value}));
     $("#onlyFavs").addEventListener("click", () => setFilter({favs:!state.favs}));
-    $("#clearFilters").addEventListener("click", () => setFilter({q:"", section:"", gender:"", family:"", moment:"", season:"", favs:false}));
+    $("#clearFilters").addEventListener("click", () => setFilter({q:"", section:"", brand:"", family:"", moment:"", season:"", favs:false}));
     $("#more").addEventListener("click", () => { state.shown += PAGE; render(); });
     // Carga automática solo hasta 72 perfumes; luego el botón, para poder llegar a la guía y al contacto.
     new IntersectionObserver(es => { if (es[0].isIntersecting && state.shown < PAGE * 3 && !$("#more").parentElement.hidden) { state.shown += PAGE; render(); } }, {rootMargin:"300px"}).observe($(".more-wrap"));
@@ -335,7 +342,7 @@
     $("#checkout").addEventListener("click", () => {
       const items = cart.map(l => ({...l, p: byId(l.id)})).filter(l => l.p);
       if (!items.length) return;
-      const lines = items.map(l => `• ${l.qty} x ${l.p.name} (${secLabel(l.p.section)})${l.p.price ? " – " + money(l.p.price) : ""}`).join("\n");
+      const lines = items.map(l => `• ${l.qty} x ${l.p.name}${l.p.brand && l.p.section !== "Novedades" ? " (inspirado en " + l.p.brand + ")" : ""}${l.p.price ? " – " + money(l.p.price) : ""}`).join("\n");
       const text = `Hola ${STORE.name}, quiero hacer este pedido:\n${lines}\n\n¿Me confirman precio total, envío y forma de pago? Gracias.`;
       const url = waLink(text);
       if (url) window.open(url, "_blank", "noopener");
@@ -343,7 +350,7 @@
     });
     $("#openFavs").addEventListener("click", () => {
       if (!favs.size) { toast("Aún no tienes favoritos. Toca el corazón de un perfume."); return; }
-      setFilter({favs:true, q:"", section:"", gender:"", family:"", moment:"", season:""}); goCatalog();
+      setFilter({favs:true, q:"", section:"", brand:"", family:"", moment:"", season:""}); goCatalog();
     });
   }
   function updateBadges() {
@@ -369,7 +376,7 @@
     $("#dStage").style.setProperty("--c", c);
     const img = $("#dImg"); img.src = p.img; img.alt = p.name;
     $("#dSection").textContent = secLabel(p.section);
-    $(".detail-copy .inspired").textContent = p.section === "Novedades" ? (p.brand || "Novedad") : "Inspirado en";
+    $(".detail-copy .inspired").textContent = inspired(p);
     $("#dName").textContent = p.name;
     $("#dTagline").textContent = p.tagline || "";
     $("#dTags").innerHTML = `<span class="tag" style="--c:${c}">${esc(p.family)}</span>${p.gender === "Unisex" ? `<span class="tag">Unisex</span>` : ""}${p.time ? `<span class="tag">${TIME[p.time]}</span>` : ""}${p.size ? `<span class="tag">${esc(p.size)}</span>` : ""}`;
@@ -402,7 +409,7 @@
     $("#dCmp").setAttribute("aria-pressed", cmp.includes(String(p.id)));
     $("#dAdd").onclick = () => addToCart(p.id, img);
     $("#dAdd").disabled = !!p.soldout; $("#dAdd").textContent = p.soldout ? "Agotado por ahora" : "Añadir a la bolsa";
-    const wa = waLink(`Hola, quiero información sobre el perfume inspirado en ${p.name} (${secLabel(p.section)}).`);
+    const wa = waLink(`Hola, quiero información sobre el perfume inspirado en ${p.name}${p.brand && p.section !== "Novedades" ? " de " + p.brand : ""} (${secLabel(p.section)}).`);
     const dWa = $("#dWa"); dWa.href = wa || "#contacto"; wa ? (dWa.target = "_blank", dWa.rel = "noopener") : dWa.removeAttribute("target");
     dWa.onclick = wa ? null : () => $("#detail").close();
     const shared = x => (x.accords || []).filter(a => (p.accords || []).includes(a)).length;
@@ -459,7 +466,7 @@
     const row = (label, fn) => `<div class="cr"><span class="cl">${label}</span>${ps.map(p => `<div>${fn(p)}</div>`).join("")}</div>`;
     $("#cmpTable").style.setProperty("--n", ps.length);
     $("#cmpTable").innerHTML =
-      `<div class="cr head"><span class="cl"></span>${ps.map(p => `<div><img src="${esc(p.img)}" alt=""><b>${esc(p.name)}</b><small>${esc(secLabel(p.section))}</small></div>`).join("")}</div>` +
+      `<div class="cr head"><span class="cl"></span>${ps.map(p => `<div><img src="${esc(p.img)}" alt=""><b>${esc(p.name)}</b><small>${esc(inspired(p))}</small></div>`).join("")}</div>` +
       row("Familia", p => `<span class="dot" style="--c:${famColor(p.family)}"></span> ${esc(p.family)}`) +
       row("Para", p => esc(p.gender)) +
       row("Acordes", p => (p.accords || []).map(a => `<span class="mini-acc" style="--ac:${accColor(a)}">${esc(a)}</span>`).join("")) +
