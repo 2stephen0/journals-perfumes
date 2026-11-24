@@ -88,7 +88,7 @@
       const r = await fetch("/api/store", {cache:"no-store"});
       if (r.ok && (r.headers.get("content-type") || "").includes("json")) {
         const api = await r.json(), s = api.store || {};
-        for (const k of ["name","tagline","phone","email","address","hours","instagram","facebook","tiktok"]) if (s[k]) STORE[k] = s[k];
+        for (const k of ["name","tagline","phone","email","hours","instagram","facebook","tiktok"]) if (s[k]) STORE[k] = s[k];
         if (s.wa) STORE.whatsapp = s.wa;
         // Cambios hechos desde el panel de administración (nombre, precio, notas, oculto, agotado…).
         const ov = api.overrides && typeof api.overrides === "object" ? api.overrides : {};
@@ -556,7 +556,7 @@
       ["Instagram", STORE.instagram, social(STORE.instagram, "https://instagram.com/")],
       ["Facebook", STORE.facebook, social(STORE.facebook, "https://facebook.com/")],
       ["TikTok", STORE.tiktok, social(STORE.tiktok, "https://tiktok.com/@")],
-      ["Ubicación", STORE.address, ""], ["Horario", STORE.hours, ""]
+      ["Horario de atención", STORE.hours, ""], ["Tienda", "100% en línea · Pedidos por WhatsApp", ""]
     ];
     $("#contactGrid").innerHTML = tiles.map(([l, v, h]) => {
       const safe = h && /^(https?:|tel:|mailto:)/i.test(h) ? h : "";
