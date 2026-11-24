@@ -17,6 +17,37 @@ function safeLink(value: string, base = '') {
   if (base && /^@?[\w.\-]+$/.test(value)) return base + value.replace(/^@/,'');
   throw new InputError('Usa un enlace https:// o un nombre de usuario válido.');
 }
+// Cambios del panel sobre el catálogo estático (public/static/catalogo.json), guardados en Netlify Blobs.
+type Override = Record<string, unknown>;
+function cleanOverrides(input: unknown): Record<string, Override> {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new InputError('Formato no válido.');
+  const out: Record<string, Override> = {};
+  const text = (v: unknown, max: number) => typeof v === 'string' ? v.trim().slice(0, max) : undefined;
+  const list = (v: unknown) => Array.isArray(v) ? v.filter(x => typeof x === 'string').map(x => x.trim().slice(0, 60)).filter(Boolean).slice(0, 12) : undefined;
+  const int = (v: unknown, min: number, max: number) => Number.isInteger(v) && (v as number) >= min && (v as number) <= max ? v as number : undefined;
+  const entries = Object.entries(input as Record<string, unknown>);
+  if (entries.length > 2000) throw new InputError('Demasiados cambios.');
+  for (const [id, raw] of entries) {
+    if (!/^\d{1,4}$/.test(id) || !raw || typeof raw !== 'object') continue;
+    const r = raw as Record<string, unknown>, o: Override = {};
+    for (const [k, max] of [['name',80],['tagline',220],['desc',1200],['size',30]] as const) { const v = text(r[k], max); if (v !== undefined) o[k] = v; }
+    if (['Caballero','Dama','Árabes y nicho'].includes(String(r.section))) o.section = r.section;
+    if (['Hombre','Mujer','Unisex'].includes(String(r.gender))) o.gender = r.gender;
+    if (['Amaderada','Oriental','Dulce','Fresca','Acuática','Cítrica','Aromática','Floral','Frutal','Especiada'].includes(String(r.family))) o.family = r.family;
+    if (['D','N','DN'].includes(String(r.time))) o.time = r.time;
+    if (r.price === null) o.price = null; else { const v = int(r.price, 0, 100000000); if (v !== undefined) o.price = v; }
+    for (const k of ['longevity','sillage']) { const v = int(r[k], 1, 5); if (v !== undefined) o[k] = v; }
+    if (Array.isArray(r.seasons) && r.seasons.length === 4 && r.seasons.every(x => int(x, 0, 5) !== undefined)) o.seasons = r.seasons;
+    const acc = list(r.accords); if (acc) o.accords = acc.slice(0, 5);
+    if (r.notes && typeof r.notes === 'object') { const n = r.notes as Record<string, unknown>; const top = list(n.top), heart = list(n.heart), base = list(n.base); if (top && heart && base) o.notes = {top, heart, base}; }
+    for (const k of ['featured','hidden','soldout']) if (typeof r[k] === 'boolean') o[k] = r[k];
+    if (Object.keys(o).length) out[id] = o;
+  }
+  return out;
+}
+async function readOverrides(): Promise<Record<string, Override>> {
+  try { return (await getStore('catalog').get('overrides', {type:'json'})) as Record<string, Override> || {}; } catch { return {}; }
+}
 function redirect(path: string) { return new Response(null,{status:303,headers:{Location:path,'Cache-Control':'no-store'}}); }
 function render(template: string, data: Record<string,unknown>) {
   const env = new nunjucks.Environment(new nunjucks.FileSystemLoader(resolve('templates')), {autoescape:true});
@@ -53,6 +84,17 @@ export default async (req: Request) => {
     if (req.method === 'POST') {
       if (req.headers.get('origin') !== url.origin) return new Response('Solicitud no permitida',{status:403});
       if (Number(req.headers.get('content-length') || 0) > 5*1024*1024) return new Response('La imagen supera el límite permitido',{status:413});
+      if (path === '/admin/catalog') {
+        if (!isAdmin) return Response.json({error:'Necesitas una cuenta con el rol admin.'},{status:403});
+        try {
+          const body = await req.json() as {overrides?: unknown};
+          const clean = cleanOverrides(body.overrides);
+          await getStore('catalog').setJSON('overrides', clean);
+          return Response.json({ok:true, count:Object.keys(clean).length},{headers:{'Cache-Control':'no-store'}});
+        } catch (error) {
+          return Response.json({error: error instanceof InputError ? error.message : 'No se pudo guardar el catálogo.'},{status:400});
+        }
+      }
       const form = await req.formData();
       const str = (key:string) => String(form.get(key) || '').trim();
       if (path === '/admin/login') {
@@ -126,6 +168,15 @@ export default async (req: Request) => {
       const all=await db.select().from(products).orderBy(desc(products.id));
       return render('admin.html',{...data,products:all,publishedCount:all.filter(p=>p.active).length,stockCount:all.reduce((n,p)=>n+p.stock,0),messages:url.searchParams.has('success')?['Cambios guardados correctamente.']:[]});
     }
+    if(path==='/api/store') {
+      // Datos públicos para el catálogo estático (public/index.html).
+      const s = data.socials as Record<string,string>;
+      return Response.json({
+        store:{name:store.store_name,tagline:store.tagline,wa:waBase,phone:store.phone,email:store.email,address:store.address,hours:store.hours,instagram:s.instagram,facebook:s.facebook,tiktok:s.tiktok},
+        overrides: await readOverrides(),
+        products:catalogue.map(p=>({id:p.id,name:p.name,brand:p.brand,price:p.price,description:p.description,size:p.size,category:p.category,fragrance:p.fragrance,stock:p.stock,image:p.image?'/media/'+p.image:''}))
+      },{headers:{'Cache-Control':'no-store'}});
+    }
     if(path==='/' || path==='/api/products') {
       const all=catalogue;
       if(path==='/api/products') return Response.json(all.filter(p=>p.stock>0).map(({id,name,price,stock})=>({id,name,price,stock})),{headers:{'Cache-Control':'no-store'}});
@@ -138,4 +189,5 @@ export default async (req: Request) => {
     return new Response('<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Journals Perfumes</title><link rel="stylesheet" href="/static/style.css"><main class="login-wrap"><section class="login-card"><h1>Volvemos en un momento</h1><p>No pudimos cargar la tienda. Intenta de nuevo dentro de unos minutos.</p><a class="button button-gold" href="/">Volver a intentar</a></section></main></html>',{status:503,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'}});
   }
 };
-export const config: Config = {path:['/','/admin','/admin/*','/api/products','/media/*']};
+// '/' lo sirve ahora el catálogo estático public/index.html.
+export const config: Config = {path:['/admin','/admin/*','/api/products','/api/store','/media/*']};

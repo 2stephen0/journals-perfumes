@@ -1,104 +1,196 @@
-{% extends "base.html" %}
-{% block title %}Administración · {{ store.store_name }}{% endblock %}
-{% block content %}
-<section class="admin-page">
-  <div class="admin-top">
-    <div><h1>Administrar tienda</h1><p>Gestiona tu catálogo, precios e inventario desde un solo lugar.</p></div>
-    <form action="{{ url_for('logout') }}" method="post"><button class="button button-outline" type="submit">Cerrar sesión</button></form>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Panel · {{ store.store_name }}</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="/static/admin.css">
+</head>
+<body class="adm">
+<aside class="side">
+  <a class="side-brand" href="/" title="Ver la tienda">
+    <svg viewBox="0 0 48 64" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 41q8-3 16 0t16 0v11q0 9-9 9H17q-9 0-9-9z" fill="#7a1f3a" fill-opacity=".6" stroke="none"/><rect x="18" y="2" width="12" height="7" rx="1"/><path d="M21 9v6M27 9v6"/><path d="M8 30q0-15 16-15t16 15v22q0 9-9 9H17q-9 0-9-9z"/><path d="M17 28h14M25 28v18q0 7-6.5 7-3.5 0-4-3.5" stroke-width="1.8"/><circle cx="14.5" cy="48.5" r="2" fill="#a3324f" stroke="none"/></svg>
+    <span><b>Journals</b><i>panel</i></span>
+  </a>
+  <nav class="side-nav" aria-label="Secciones del panel">
+    <button type="button" data-view="catalogo" aria-current="page">Catálogo<small id="navCount">199</small></button>
+    <button type="button" data-view="nuevos">Productos nuevos<small>{{ products|length }}</small></button>
+    <button type="button" data-view="tienda">Tienda y contacto</button>
+  </nav>
+  <div class="side-foot">
+    <a class="side-link" href="/" target="_blank" rel="noopener">Ver la tienda ↗</a>
+    <form action="/admin/logout" method="post"><button class="side-link" type="submit">Cerrar sesión</button></form>
   </div>
-  <div class="admin-stats">
-    <div><span>Productos registrados</span><strong>{{ products|length }}</strong></div>
-    <div><span>Productos publicados</span><strong>{{ publishedCount }}</strong></div>
-    <div><span>Unidades disponibles</span><strong>{{ stockCount }}</strong></div>
-  </div>
-  <div class="admin-layout">
-    <section class="admin-card">
-      <div class="admin-card-head"><div><h2>Añadir producto</h2></div><span class="admin-plus">＋</span></div>
-      <form method="post" action="{{ url_for('save_product') }}" enctype="multipart/form-data" class="product-form" id="productForm">
-        <input type="hidden" name="id" id="productId">
-        <label>Nombre del perfume *<input name="name" id="name" required placeholder="Ej. Oud Signature"></label>
-        <div class="form-grid">
-          <label>Marca<input name="brand" id="brand" placeholder="Marca del perfume"></label>
-          <label>Tamaño<input name="size" id="size" placeholder="100 ml"></label>
+</aside>
+
+<main class="main">
+  {% if messages %}<div class="flash-wrap">{% for message in messages %}<div class="flash" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}
+
+  <!-- CATÁLOGO -->
+  <section class="view" id="view-catalogo">
+    <header class="view-head">
+      <div><p class="kicker">Catálogo de perfumes</p><h1>Tus fragancias</h1><p class="muted">Cambia nombres, precios, descripciones y disponibilidad. Los cambios se ven en la tienda al guardar.</p></div>
+    </header>
+    <div class="stats" id="stats"></div>
+
+    <div class="tools">
+      <label class="search"><span class="sr-only">Buscar</span><input id="aq" type="search" placeholder="Buscar perfume…" autocomplete="off"></label>
+      <select id="aSection" aria-label="Colección"><option value="">Todas las colecciones</option><option>Caballero</option><option>Dama</option><option>Árabes y nicho</option></select>
+      <select id="aFilter" aria-label="Mostrar"><option value="">Todos</option><option value="noprice">Sin precio</option><option value="soldout">Agotados</option><option value="hidden">Ocultos</option><option value="featured">Destacados</option><option value="changed">Con cambios</option></select>
+      <button type="button" class="btn ghost" id="bulkToggle" aria-expanded="false">Precio por lote</button>
+    </div>
+    <div class="bulk" id="bulk" hidden>
+      <p>Pon el mismo precio a todos los perfumes que estás viendo con los filtros actuales.</p>
+      <div class="bulk-row">
+        <label>Precio (COP)<input type="number" id="bulkPrice" min="0" step="1000" placeholder="Ej. 95000"></label>
+        <label class="check"><input type="checkbox" id="bulkOnlyEmpty" checked> Solo los que no tienen precio</label>
+        <button type="button" class="btn gold" id="bulkApply">Aplicar</button>
+      </div>
+    </div>
+
+    <div class="table" role="table" aria-label="Perfumes">
+      <div class="tr th" role="row"><span role="columnheader">Perfume</span><span role="columnheader">Precio (COP)</span><span role="columnheader">Destacado</span><span role="columnheader">Agotado</span><span role="columnheader">Oculto</span><span role="columnheader"></span></div>
+      <div id="rows"></div>
+    </div>
+    <div class="more"><button type="button" class="btn ghost" id="aMore">Ver más</button></div>
+  </section>
+
+  <!-- PRODUCTOS NUEVOS -->
+  <section class="view" id="view-nuevos" hidden>
+    <header class="view-head"><div><p class="kicker">Con foto propia</p><h1>Productos nuevos</h1><p class="muted">Agrega perfumes que no están en el catálogo, con tus propias fotos. Aparecen en la tienda como “Novedades”.</p></div></header>
+    <div class="two-col">
+      <section class="card">
+        <h2 id="formTitle">Añadir producto</h2>
+        <form method="post" action="/admin/product/save" enctype="multipart/form-data" class="form" id="productForm">
+          <input type="hidden" name="id" id="productId">
+          <label>Nombre del perfume *<input name="name" id="name" required placeholder="Ej. Oud Signature"></label>
+          <div class="grid2">
+            <label>Marca o referencia<input name="brand" id="brand" placeholder="Opcional"></label>
+            <label>Tamaño<input name="size" id="size" placeholder="100 ml"></label>
+          </div>
+          <div class="grid2">
+            <label>Precio (COP) *<input type="number" name="price" id="price" required min="0" step="100" placeholder="150000"></label>
+            <label>Precio anterior<input type="number" name="old_price" id="old_price" min="0" step="100" placeholder="Opcional"></label>
+          </div>
+          <div class="grid2">
+            <label>Para<select name="category" id="category"><option>Unisex</option><option>Hombre</option><option>Mujer</option></select></label>
+            <label>Familia olfativa<select name="fragrance" id="fragrance"><option value="">Sin definir</option><option>Amaderada</option><option>Oriental</option><option>Dulce</option><option>Fresca</option><option>Acuática</option><option>Cítrica</option><option>Aromática</option><option>Floral</option><option>Frutal</option><option>Especiada</option></select></label>
+          </div>
+          <label>Descripción<textarea name="description" id="description" rows="3" placeholder="Cómo huele, cuándo usarlo…"></textarea></label>
+          <label>Foto principal<input type="file" name="image" id="image" accept=".jpg,.jpeg,.png,.webp,.gif"><span class="help">JPG, PNG, WEBP o GIF, máximo 4 MB. Si editas sin subir foto, se conserva la actual.</span></label>
+          <label>Fotos adicionales<input type="file" name="additional_images" id="additionalImages" accept=".jpg,.jpeg,.png,.webp,.gif" multiple><span class="help">Hasta 8. Todas las fotos nuevas deben sumar menos de 4 MB.</span></label>
+          <div id="existingImages" class="photo-list"></div>
+          <label>Unidades en inventario<input type="number" name="stock" id="stock" min="0" value="1" required></label>
+          <div class="checks"><label class="check"><input type="checkbox" name="featured" id="featured"> Destacado</label><label class="check"><input type="checkbox" name="active" id="active" checked> Publicado en la tienda</label></div>
+          <div class="actions"><button class="btn gold" type="submit" id="saveButton">Guardar producto</button><button class="btn ghost" type="button" id="resetForm">Limpiar</button></div>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Tus productos <small class="muted">{{ products|length }} en total</small></h2>
+        <div class="plist">
+          {% for p in products %}
+          <div class="pitem">
+            <div class="pthumb">{% if p.image %}<img src="/media/{{ p.image }}" alt="">{% endif %}</div>
+            <div class="pinfo"><b>{{ p.name }}</b><span>{{ p.brand or p.category }}{% if p.size %} · {{ p.size }}{% endif %}</span><span class="gold">{{ p.price|money }} COP</span></div>
+            <div class="pact">
+              <span class="pill {% if not p.active or p.stock <= 0 %}off{% endif %}">{% if not p.active %}Oculto{% elif p.stock <= 0 %}Agotado{% else %}{{ p.stock }} uds.{% endif %}</span>
+              <button type="button" class="link edit-product" data-product='{{ {"id":p.id,"name":p.name,"brand":p.brand,"price":p.price,"old_price":p.old_price,"description":p.description,"size":p.size,"category":p.category,"fragrance":p.fragrance,"stock":p.stock,"featured":p.featured,"active":p.active,"additional_images":p.additional_images}|tojson }}'>Editar</button>
+              <form method="post" action="/admin/product/{{ p.id }}/delete" data-confirm="¿Eliminar {{ p.name }}? No se puede deshacer."><button class="link danger" type="submit">Eliminar</button></form>
+            </div>
+          </div>
+          {% else %}<p class="muted">Todavía no hay productos nuevos. Los 199 perfumes del catálogo se editan en la sección Catálogo.</p>{% endfor %}
         </div>
-        <div class="form-grid">
-          <label>Precio (COP) *<input type="number" name="price" id="price" required min="0" step="100" placeholder="150000"></label>
-          <label>Precio anterior<input type="number" name="old_price" id="old_price" min="0" step="100" placeholder="Opcional"></label>
-        </div>
-        <div class="form-grid">
-          <label>Categoría<select name="category" id="category"><option>Unisex</option><option>Hombre</option><option>Mujer</option></select></label>
-          <label>Familia olfativa<input name="fragrance" id="fragrance" placeholder="Amaderada, floral..."></label>
-        </div>
-        <label>Descripción<textarea name="description" id="description" rows="3" placeholder="Describe la fragancia..."></textarea></label>
-        <label>Fotografía principal<input type="file" name="image" id="image" accept=".jpg,.jpeg,.png,.webp,.gif"><span class="field-help">JPG, PNG, WEBP o GIF · Máximo 4 MB. Si editas sin subir una imagen, se conserva la actual.</span></label>
-        <label>Fotos adicionales<input type="file" name="additional_images" id="additionalImages" accept=".jpg,.jpeg,.png,.webp,.gif" multiple><span class="field-help">Hasta 8 fotos adicionales. Selecciona varias a la vez. Todas las fotos nuevas deben pesar menos de 4 MB en total.</span></label>
-        <div id="existingImages" class="admin-photo-list"></div>
-        <label>Unidades en inventario<input type="number" name="stock" id="stock" min="0" value="1" required></label>
-        <div class="check-row"><label class="check-label"><input type="checkbox" name="featured" id="featured"> Producto destacado</label><label class="check-label"><input type="checkbox" name="active" id="active" checked> Publicado en la tienda</label></div>
-        <div class="form-actions"><button class="button button-gold" type="submit" id="saveButton">Guardar producto</button><button class="button button-outline" type="button" id="resetForm">Limpiar</button></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- TIENDA -->
+  <section class="view" id="view-tienda" hidden>
+    <header class="view-head"><div><p class="kicker">Configuración</p><h1>Tienda y contacto</h1><p class="muted">Estos datos aparecen en la página y en los botones de WhatsApp.</p></div></header>
+    <section class="card">
+      <form method="post" action="/admin/settings" class="form settings">
+        <label>Nombre de la tienda<input name="store_name" value="{{ store.store_name }}" required></label>
+        <label>Frase de marca<input name="tagline" value="{{ store.tagline }}"></label>
+        <label>Número de WhatsApp<input name="whatsapp" value="{{ store.whatsapp }}" placeholder="573001234567" inputmode="numeric"><span class="help">Solo números con código de país. Colombia: 57 + número.</span></label>
+        <label>Enlace de WhatsApp (opcional)<input name="whatsapp_link" value="{{ store.whatsapp_link }}" placeholder="https://wa.me/573001234567"><span class="help">Si lo pones, tiene prioridad sobre el número.</span></label>
+        <label>Teléfono<input name="phone" value="{{ store.phone }}" placeholder="+57 300 000 0000"></label>
+        <label>Correo<input name="email" type="email" value="{{ store.email }}" placeholder="hola@tutienda.com"></label>
+        <label>Instagram<input name="instagram" value="{{ store.instagram }}" placeholder="@usuario o enlace"></label>
+        <label>Facebook<input name="facebook" value="{{ store.facebook }}" placeholder="usuario o enlace"></label>
+        <label>TikTok<input name="tiktok" value="{{ store.tiktok }}" placeholder="@usuario o enlace"></label>
+        <label>Ubicación<input name="address" value="{{ store.address }}" placeholder="Ciudad, barrio o dirección"></label>
+        <label>Horario<input name="hours" value="{{ store.hours }}" placeholder="Lun a sáb, 9 a. m. a 7 p. m."></label>
+        <div class="actions"><button class="btn gold" type="submit">Guardar cambios</button></div>
       </form>
     </section>
-    <section class="admin-card inventory-card">
-      <div class="admin-card-head"><div><h2>Tus productos</h2></div><span class="inventory-count">{{ products|length }} en total</span></div>
-      <div class="inventory-list">
-        {% for p in products %}
-        <div class="inventory-item">
-          <div class="inventory-thumb">{% if p.image %}<img src="{{ url_for('static', {filename: 'uploads/' + p.image}) }}" alt="">{% else %}<span>✧</span>{% endif %}</div>
-          <div class="inventory-details"><strong>{{ p.name }}</strong><span>{{ p.brand or p.category }} · {{ p.size }}</span><b>{{ p.price|money }} COP</b></div>
-          <div class="inventory-status"><span class="status-pill {% if not p.active %}inactive{% elif p.stock <= 0 %}inactive{% endif %}">{% if not p.active %}Oculto{% elif p.stock <= 0 %}Agotado{% else %}{{ p.stock }} uds.{% endif %}</span><div class="inventory-actions"><button type="button" class="text-action edit-product" data-product='{{ {"id":p.id,"name":p.name,"brand":p.brand,"price":p.price,"old_price":p.old_price,"description":p.description,"size":p.size,"category":p.category,"fragrance":p.fragrance,"stock":p.stock,"featured":p.featured,"active":p.active,"additional_images":p.additional_images}|tojson }}'>Editar</button><form method="post" action="{{ url_for('delete_product', {product_id: p.id}) }}" onsubmit="return confirm('¿Eliminar este producto?')"><button class="text-action danger" type="submit">Eliminar</button></form></div></div>
-        </div>
-        {% else %}<p class="muted">Todavía no hay productos.</p>{% endfor %}
-      </div>
-    </section>
-  </div>
-  <section class="admin-card settings-card">
-    <div class="admin-card-head"><div><h2>Datos de la tienda y contacto</h2></div></div>
-    <form method="post" action="{{ url_for('save_settings') }}" class="settings-form">
-      <label>Nombre de la tienda<input name="store_name" value="{{ store.store_name }}" required></label>
-      <label>Frase de marca<input name="tagline" value="{{ store.tagline }}"></label>
-      <label>Número de WhatsApp<input name="whatsapp" value="{{ store.whatsapp }}" placeholder="573001234567"><span class="field-help">Solo números con código de país. Colombia: 57 + número.</span></label>
-      <label class="wide">Enlace de WhatsApp (opcional, tiene prioridad sobre el número)<input name="whatsapp_link" value="{{ store.whatsapp_link }}" placeholder="https://wa.me/573001234567"><span class="field-help">Pega aquí el link al que redirigen todos los botones de WhatsApp.</span></label>
-      <label>Teléfono<input name="phone" value="{{ store.phone }}" placeholder="+57 300 000 0000"></label>
-      <label>Correo<input name="email" type="email" value="{{ store.email }}" placeholder="hola@journalsperfumes.com"></label>
-      <label>Instagram (@usuario o enlace)<input name="instagram" value="{{ store.instagram }}" placeholder="@journalsperfumes"></label>
-      <label>Facebook (usuario o enlace)<input name="facebook" value="{{ store.facebook }}"></label>
-      <label>TikTok (@usuario o enlace)<input name="tiktok" value="{{ store.tiktok }}"></label>
-      <label>Ubicación<input name="address" value="{{ store.address }}" placeholder="Ciudad, barrio o dirección"></label>
-      <label>Horario<input name="hours" value="{{ store.hours }}" placeholder="Lun a sáb, 9 a. m. a 7 p. m."></label>
-      <button class="button button-gold" type="submit">Guardar cambios</button>
-    </form>
   </section>
-</section>
-<script>
-document.querySelectorAll('.edit-product').forEach(btn => btn.addEventListener('click', () => {
-  const p = JSON.parse(btn.dataset.product);
-  document.getElementById('productForm').reset();
-  document.getElementById('existingImages').replaceChildren();
-  (p.additional_images || []).forEach(key => {
-    const label = document.createElement('label');
-    const img = document.createElement('img');
-    img.src = '/media/' + encodeURIComponent(key);
-    img.alt = 'Foto adicional';
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox'; checkbox.name = 'remove_images'; checkbox.value = key;
-    label.append(img, checkbox, document.createTextNode('Quitar foto'));
-    document.getElementById('existingImages').append(label);
-  });
-  document.getElementById('productId').value = p.id;
-  Object.keys(p).forEach(k => {
-    const el = document.getElementById(k);
-    if (!el) return;
-    if (el.type === 'checkbox') el.checked = !!p[k];
-    else el.value = p[k] ?? '';
-  });
-  document.getElementById('saveButton').textContent = 'Actualizar producto';
-  document.getElementById('productForm').scrollIntoView({behavior:'smooth', block:'start'});
-}));
-document.getElementById('resetForm').addEventListener('click', () => {
-  document.getElementById('productForm').reset();
-  document.getElementById('productId').value = '';
-  document.getElementById('existingImages').replaceChildren();
-  document.getElementById('saveButton').textContent = 'Guardar producto';
-});
-</script>
-{% endblock %}
+</main>
+
+<!-- barra de cambios sin guardar -->
+<div class="savebar" id="savebar" hidden>
+  <span id="saveMsg">Tienes cambios sin guardar</span>
+  <button type="button" class="btn ghost" id="discard">Descartar</button>
+  <button type="button" class="btn gold" id="saveAll">Guardar cambios</button>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- editor de perfume -->
+<div class="drawer-bg" id="edBg"></div>
+<aside class="drawer" id="editor" aria-label="Editar perfume" aria-hidden="true">
+  <div class="ed-head">
+    <img id="edImg" alt="">
+    <div><p class="kicker" id="edSection"></p><h2 id="edTitle">Editar perfume</h2></div>
+    <button type="button" class="x" id="edClose" aria-label="Cerrar">×</button>
+  </div>
+  <form class="form ed-body" id="edForm">
+    <fieldset><legend>Básico</legend>
+      <label>Nombre de referencia<input name="name" required maxlength="80"></label>
+      <div class="grid2">
+        <label>Precio (COP)<input name="price" type="number" min="0" step="1000" placeholder="Sin precio = “Consultar”"></label>
+        <label>Tamaño<input name="size" maxlength="30" placeholder="100 ml"></label>
+      </div>
+      <div class="grid3">
+        <label>Colección<select name="section"><option>Caballero</option><option>Dama</option><option>Árabes y nicho</option></select></label>
+        <label>Para<select name="gender"><option>Hombre</option><option>Mujer</option><option>Unisex</option></select></label>
+        <label>Familia<select name="family"><option>Amaderada</option><option>Oriental</option><option>Dulce</option><option>Fresca</option><option>Acuática</option><option>Cítrica</option><option>Aromática</option><option>Floral</option><option>Frutal</option><option>Especiada</option></select></label>
+      </div>
+      <div class="checks"><label class="check"><input type="checkbox" name="featured"> Destacado</label><label class="check"><input type="checkbox" name="soldout"> Agotado</label><label class="check"><input type="checkbox" name="hidden"> Oculto en la tienda</label></div>
+    </fieldset>
+    <fieldset><legend>Descripción</legend>
+      <label>Frase corta<input name="tagline" maxlength="220"><span class="help">Aparece en la tarjeta y bajo el nombre.</span></label>
+      <label>Descripción completa (opcional)<textarea name="desc" rows="4" maxlength="1200" placeholder="Si la dejas vacía, se arma sola con las notas."></textarea></label>
+    </fieldset>
+    <fieldset><legend>Notas y acordes</legend>
+      <label>Notas de salida<input name="top" placeholder="Separadas por coma"></label>
+      <label>Notas de corazón<input name="heart" placeholder="Separadas por coma"></label>
+      <label>Notas de fondo<input name="base" placeholder="Separadas por coma"></label>
+      <label>Acordes principales<input name="accords" placeholder="Ej. Dulce, Amaderado, Ámbar"></label>
+    </fieldset>
+    <fieldset><legend>Perfil de uso</legend>
+      <div class="grid3">
+        <label>Momento<select name="time"><option value="D">De día</option><option value="N">De noche</option><option value="DN">Día y noche</option></select></label>
+        <label>Duración (1–5)<input name="longevity" type="number" min="1" max="5"></label>
+        <label>Estela (1–5)<input name="sillage" type="number" min="1" max="5"></label>
+      </div>
+      <div class="grid4">
+        <label>Primavera<input name="s0" type="number" min="0" max="5"></label>
+        <label>Verano<input name="s1" type="number" min="0" max="5"></label>
+        <label>Otoño<input name="s2" type="number" min="0" max="5"></label>
+        <label>Invierno<input name="s3" type="number" min="0" max="5"></label>
+      </div>
+      <span class="help">Temporadas de 0 (nada) a 5 (ideal).</span>
+    </fieldset>
+  </form>
+  <div class="ed-foot">
+    <button type="button" class="link danger" id="edReset">Volver al original</button>
+    <button type="button" class="btn gold" id="edApply">Aplicar</button>
+  </div>
+</aside>
+
+<script src="/static/admin.js" defer></script>
+</body>
+</html>

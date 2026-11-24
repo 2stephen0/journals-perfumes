@@ -1,0 +1,18 @@
+# Dependencias y compilados
+node_modules/
+.netlify/
+__pycache__/
+*.pyc
+
+# Datos locales
+store.db
+static/uploads/
+.env
+.env.*
+
+# Archivos grandes de trabajo (no hacen falta para publicar la página)
+perfumes_png/
+*.pdf
+
+# Configuración local de Claude
+.claude/

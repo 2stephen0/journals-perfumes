@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b090c">
+  <title>Journals Perfumes · Catálogo de fragancias</title>
+  <meta name="description" content="Catálogo de perfumes Journals: fragancias de caballero, dama, árabes y nicho. Encuentra tu aroma y pide por WhatsApp.">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500;600&display=swap">
+  <link rel="stylesheet" href="/static/catalogo.css">
+  <link rel="stylesheet" href="/static/catalogo-v2.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mark" viewBox="0 0 48 64"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 41q8-3 16 0t16 0v11q0 9-9 9H17q-9 0-9-9z" fill="#7a1f3a" fill-opacity=".6" stroke="none"/><rect x="18" y="2" width="12" height="7" rx="1"/><path d="M21 9v6M27 9v6"/><path d="M8 30q0-15 16-15t16 15v22q0 9-9 9H17q-9 0-9-9z"/><path d="M17 28h14M25 28v18q0 7-6.5 7-3.5 0-4-3.5" stroke-width="1.8"/><circle cx="14.5" cy="48.5" r="2" fill="#a3324f" stroke="none"/></g></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.6 4.5 7.1 4.5c2 0 3.6 1.1 4.9 2.8 1.3-1.7 2.9-2.8 4.9-2.8 3.5 0 5.7 3.5 4.4 6.8-1.8 4.6-9.3 9.2-9.3 9.2Z"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8Zm4 0V6a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3Z"/></symbol>
+</svg>
+
+<header class="site-header" id="top">
+  <a class="brand" href="#top" aria-label="Journals Perfumes, inicio">
+    <svg class="mark" aria-hidden="true"><use href="#mark"/></svg>
+    <span class="wordmark"><b>Journals</b><i>perfumes</i></span>
+  </a>
+  <nav class="nav" aria-label="Principal">
+    <a href="#colecciones">Colecciones</a>
+    <a href="#catalogo">Catálogo</a>
+    <button type="button" class="nav-link" data-open-quiz>Encuentra tu aroma</button>
+    <a href="#guia">Guía</a>
+    <a href="#contacto">Contacto</a>
+  </nav>
+  <div class="header-actions">
+    <button type="button" class="pill-btn" id="openFavs" aria-label="Ver favoritos"><svg><use href="#i-heart"/></svg><span class="badge" id="favCount">0</span></button>
+    <button type="button" class="pill-btn" id="openCart" aria-label="Abrir bolsa"><svg><use href="#i-bag"/></svg><span class="badge" id="cartCount">0</span></button>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-copy reveal">
+      <p class="kicker">Perfumería de autor · Catálogo 2025</p>
+      <h1>Cada aroma es una<br><em>página</em> de tu historia.</h1>
+      <p class="lead"><b data-total>199</b> fragancias de caballero, dama, árabes y nicho. Descubre la tuya con nuestro buscador olfativo y pídela en un mensaje.</p>
+      <div class="hero-actions">
+        <button type="button" class="button button-gold" data-open-quiz>Encuentra tu aroma</button>
+        <a href="#catalogo" class="button button-ghost">Ver el catálogo</a>
+      </div>
+      <dl class="hero-stats">
+        <div><dt data-total>199</dt><dd>fragancias</dd></div>
+        <div><dt>3</dt><dd>colecciones</dd></div>
+        <div><dt>10</dt><dd>familias olfativas</dd></div>
+      </dl>
+    </div>
+    <div class="hero-stage" aria-hidden="true">
+      <div class="halo"></div>
+      <div class="arch"><div class="arch-inner" id="heroBottles"></div></div>
+      <div class="floor"></div>
+      <div class="hero-caption"><span id="heroFam">Oriental</span><b id="heroName">1 Million Elixir</b></div>
+    </div>
+    <button type="button" class="surprise" id="surprise">Sorpréndeme</button>
+  </section>
+
+  <div class="marquee" aria-hidden="true"><div class="marquee-track" id="marquee"></div></div>
+
+  <!-- COLECCIONES -->
+  <section class="collections" id="colecciones">
+    <div class="section-heading reveal"><div><p class="kicker">Tres mundos</p><h2>Colecciones</h2></div><p class="muted">Elige un mundo y explora sus fragancias.</p></div>
+    <div class="collection-grid" id="collectionGrid"></div>
+  </section>
+
+  <!-- RUEDA OLFATIVA -->
+  <section class="wheel-section">
+    <div class="glow-border reveal">
+      <span class="glow-light" aria-hidden="true"></span>
+      <div class="scent-box">
+        <div class="scent-preview" id="scentPreview" aria-live="polite">
+          <p class="kicker">Rueda olfativa</p>
+          <h2>¿Qué te gusta oler?</h2>
+          <p class="muted">Elige una familia y descubre cómo huele, cuándo usarla y qué perfumes la tienen.</p>
+          <div class="sp-card" id="spCard"></div>
+        </div>
+        <div class="scent-grid" id="familyCloud" role="group" aria-label="Familias olfativas"></div>
+      </div>
+      <div class="note-strip">
+        <span class="note-label">Busca por nota</span>
+        <div class="note-chips" id="noteChips"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATÁLOGO -->
+  <section class="catalog" id="catalogo">
+    <div class="section-heading reveal"><div><p class="kicker">La colección completa</p><h2>Catálogo</h2></div></div>
+    <div class="toolbar" id="toolbar">
+      <label class="search"><span class="sr-only">Buscar perfume</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><input id="q" type="search" placeholder="Buscar por nombre o nota (vainilla, oud…)" autocomplete="off"></label>
+      <div class="seg" role="group" aria-label="Colección" id="sectionTabs"></div>
+      <select id="gender" aria-label="Para quién"><option value="">Para todos</option><option>Hombre</option><option>Mujer</option><option>Unisex</option></select>
+      <select id="family" aria-label="Familia olfativa"><option value="">Todas las familias</option></select>
+      <select id="moment" aria-label="Momento"><option value="">Día y noche</option><option value="D">Para el día</option><option value="N">Para la noche</option></select>
+      <select id="season" aria-label="Temporada"><option value="">Todo el año</option><option value="0">Primavera</option><option value="1">Verano</option><option value="2">Otoño</option><option value="3">Invierno</option></select>
+      <select id="sort" aria-label="Ordenar"><option value="cat">Orden del catálogo</option><option value="long">Mayor duración</option><option value="sill">Mayor estela</option><option value="az">Nombre A–Z</option><option value="za">Nombre Z–A</option></select>
+      <button type="button" class="chip-toggle" id="onlyFavs" aria-pressed="false"><svg><use href="#i-heart"/></svg> Favoritos</button>
+    </div>
+    <div class="result-bar"><span id="resultCount">199 perfumes</span><button type="button" class="link-btn" id="clearFilters" hidden>Limpiar filtros</button></div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden><h3>No encontramos perfumes</h3><p>Prueba con otra búsqueda o limpia los filtros.</p></div>
+    <div class="more-wrap"><button type="button" class="button button-ghost" id="more">Ver más perfumes</button></div>
+  </section>
+
+  <!-- CÓMO PEDIR -->
+  <section class="steps" id="como-pedir">
+    <div class="section-heading reveal"><div><p class="kicker">Simple y directo</p><h2>Cómo pedir</h2></div></div>
+    <ol class="step-list">
+      <li class="reveal"><span>01</span><h3>Elige</h3><p>Explora el catálogo o usa “Encuentra tu aroma”. Guarda tus favoritos con el corazón.</p></li>
+      <li class="reveal"><span>02</span><h3>Añade a la bolsa</h3><p>Selecciona las cantidades. Tu bolsa se guarda mientras navegas.</p></li>
+      <li class="reveal"><span>03</span><h3>Pide por WhatsApp</h3><p>Enviamos tu pedido con los números de referencia. Confirmamos precio, envío y pago contigo.</p></li>
+    </ol>
+  </section>
+
+  <section class="guide" id="guia">
+    <div class="section-heading reveal"><div><p class="kicker">Guía del perfume</p><h2>Saca el máximo a tu aroma</h2></div></div>
+    <div class="guide-grid">
+      <div class="tips">
+        <article class="tip spot reveal"><span class="tip-ic">01</span><h3>Dónde aplicarlo</h3><p>En los puntos de pulso: muñecas, cuello, detrás de las orejas y pliegue del codo. El calor de la piel lo hace florecer.</p></article>
+        <article class="tip spot reveal"><span class="tip-ic">02</span><h3>No frotes</h3><p>Frotar las muñecas rompe las notas de salida. Aplica y deja que se seque solo.</p></article>
+        <article class="tip spot reveal"><span class="tip-ic">03</span><h3>Piel hidratada</h3><p>Una crema sin aroma antes del perfume ayuda a que dure varias horas más.</p></article>
+        <article class="tip spot reveal"><span class="tip-ic">04</span><h3>Guárdalo bien</h3><p>Lejos del sol, la humedad y el calor. Mejor en su caja, en un lugar fresco.</p></article>
+      </div>
+      <div class="pyramid-explain spot reveal">
+        <h3>¿Qué son las notas?</h3>
+        <div class="pyr"><b>Salida</b><span>Lo primero que hueles. Dura de 15 a 30 minutos: suelen ser cítricos y notas frescas.</span></div>
+        <div class="pyr"><b>Corazón</b><span>El alma del perfume. Aparece después y dura varias horas: flores, especias, frutas.</span></div>
+        <div class="pyr"><b>Fondo</b><span>La estela final que queda en la piel: maderas, vainilla, ámbar, almizcle.</span></div>
+      </div>
+    </div>
+    <div class="faq reveal">
+      <h3 class="faq-title">Preguntas frecuentes</h3>
+      <details><summary>¿Qué es un perfume “inspirado”?</summary><p>Es una fragancia elaborada para recordar el estilo y las notas de un perfume reconocido. No es el producto original de la marca; usamos el nombre de referencia solo para que sepas a qué huele.</p></details>
+      <details><summary>¿Cuánto dura en la piel?</summary><p>Depende de la fragancia, tu tipo de piel y el clima. En cada perfume verás un indicador de duración y estela como referencia.</p></details>
+      <details><summary>¿Cómo hago mi pedido?</summary><p>Añade tus perfumes a la bolsa y toca “Pedir por WhatsApp”. Te llegará el mensaje con la lista lista para enviar y te confirmamos precio, envío y pago.</p></details>
+      <details><summary>¿Hacen envíos?</summary><p>Escríbenos por WhatsApp con tu ciudad y te contamos la cobertura, el costo y el tiempo de entrega.</p></details>
+      <details><summary>¿Cómo elijo uno para regalar?</summary><p>Usa “Encuentra tu aroma” respondiendo por la otra persona, o escríbenos contándonos sus gustos y te recomendamos.</p></details>
+    </div>
+  </section>
+
+  <section class="wa-banner reveal">
+    <div><h2>¿No sabes cuál elegir?</h2><p>Cuéntanos para qué ocasión lo quieres y te recomendamos un aroma.</p></div>
+    <a class="button button-wa" data-wa="Hola, necesito asesoría para elegir un perfume." href="#contacto"><svg><use href="#i-wa"/></svg> Hablar por WhatsApp</a>
+  </section>
+
+  <section class="contact" id="contacto">
+    <div class="section-heading reveal"><div><p class="kicker">Estamos para ti</p><h2>Contacto</h2></div></div>
+    <div class="contact-grid" id="contactGrid"></div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-brand"><svg class="mark" aria-hidden="true"><use href="#mark"/></svg><div><b>Journals Perfumes</b><p id="footTagline">Tu historia tiene un aroma</p></div></div>
+  <p class="disclaimer">Nuestras fragancias son <b>inspiradas</b> en perfumes reconocidos. Los nombres de referencia se usan solo para describir el estilo del aroma; no somos distribuidores oficiales ni tenemos relación con esas marcas.</p>
+  <div class="footer-links"><a href="#catalogo">Catálogo</a><a href="#contacto">Contacto</a><a href="/admin">Administrar</a></div>
+</footer>
+
+<a class="wa-float" data-wa="Hola, quiero información sobre sus perfumes." href="#contacto" aria-label="Escribir por WhatsApp"><svg><use href="#i-wa"/></svg></a>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- DETALLE -->
+<dialog class="modal detail" id="detail" aria-labelledby="dName">
+  <button type="button" class="x" data-close aria-label="Cerrar">×</button>
+  <button type="button" class="nav-arrow prev" id="dPrev" aria-label="Perfume anterior">‹</button>
+  <button type="button" class="nav-arrow next" id="dNext" aria-label="Perfume siguiente">›</button>
+  <div class="detail-layout">
+    <div class="detail-stage" id="dStage"><img id="dImg" alt=""><span class="zoom-hint">Pasa el cursor para ampliar</span></div>
+    <div class="detail-copy">
+      <p class="kicker" id="dSection"></p>
+      <p class="inspired">Inspirado en</p>
+      <h2 id="dName"></h2>
+      <p class="d-tagline" id="dTagline"></p>
+      <div class="tags" id="dTags"></div>
+      <div class="tabs" role="tablist" aria-label="Información del perfume">
+        <button type="button" role="tab" id="tab-desc" aria-controls="pane-desc" aria-selected="true">Descripción</button>
+        <button type="button" role="tab" id="tab-notes" aria-controls="pane-notes" aria-selected="false" tabindex="-1">Notas</button>
+        <button type="button" role="tab" id="tab-prof" aria-controls="pane-prof" aria-selected="false" tabindex="-1">Perfil de uso</button>
+        <span class="tab-ink" aria-hidden="true"></span>
+      </div>
+      <div class="pane" role="tabpanel" id="pane-desc" aria-labelledby="tab-desc"></div>
+      <div class="pane" role="tabpanel" id="pane-notes" aria-labelledby="tab-notes" hidden></div>
+      <div class="pane" role="tabpanel" id="pane-prof" aria-labelledby="tab-prof" hidden></div>
+      <div class="price" id="dPrice"></div>
+      <div class="detail-actions">
+        <button type="button" class="button button-gold" id="dAdd">Añadir a la bolsa</button>
+        <button type="button" class="button button-ghost icon-only" id="dCmp" aria-pressed="false" aria-label="Añadir al comparador" title="Comparar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></button>
+        <button type="button" class="button button-ghost icon-only" id="dFav" aria-pressed="false" aria-label="Guardar en favoritos"><svg><use href="#i-heart"/></svg></button>
+      </div>
+      <a class="button button-wa full" id="dWa" href="#contacto"><svg><use href="#i-wa"/></svg> Consultar por WhatsApp</a>
+      <h3 class="similar-title">Si te gusta este, prueba</h3>
+      <div class="similar" id="dSimilar"></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- COMPARADOR -->
+<div class="cmp-tray" id="cmpTray" hidden>
+  <div class="cmp-thumbs" id="cmpThumbs"></div>
+  <button type="button" class="button button-gold" id="cmpOpen">Comparar</button>
+  <button type="button" class="link-btn" id="cmpClear">Vaciar</button>
+</div>
+<dialog class="modal cmp" id="cmp" aria-labelledby="cmpTitle">
+  <button type="button" class="x" data-close aria-label="Cerrar">×</button>
+  <p class="kicker">Comparador</p><h2 id="cmpTitle">Frente a frente</h2>
+  <div class="cmp-table" id="cmpTable"></div>
+</dialog>
+
+<!-- QUIZ -->
+<dialog class="modal quiz" id="quiz" aria-labelledby="quizTitle">
+  <button type="button" class="x" data-close aria-label="Cerrar">×</button>
+  <div class="quiz-progress"><span id="quizBar"></span></div>
+  <div id="quizBody"></div>
+</dialog>
+
+<!-- BOLSA -->
+<div class="drawer-backdrop" id="backdrop"></div>
+<aside class="drawer" id="cart" aria-label="Bolsa de compras" aria-hidden="true">
+  <div class="drawer-head"><div><h2>Tu bolsa</h2><span class="muted" id="cartSub">Vacía</span></div><button type="button" class="x static" id="closeCart" aria-label="Cerrar bolsa">×</button></div>
+  <div class="drawer-items" id="cartItems"></div>
+  <div class="drawer-foot">
+    <div class="total"><span>Total estimado</span><strong id="cartTotal">A consultar</strong></div>
+    <button type="button" class="button button-wa full" id="checkout"><svg><use href="#i-wa"/></svg> Pedir por WhatsApp</button>
+    <p class="note">El precio, el envío y el pago se confirman por WhatsApp.</p>
+  </div>
+</aside>
+
+<noscript><p style="padding:20px;text-align:center">Activa JavaScript para ver el catálogo.</p></noscript>
+<script src="/static/catalogo.js" defer></script>
+</body>
+</html>
